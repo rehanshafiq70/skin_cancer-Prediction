@@ -2,6 +2,6 @@ streamlit
 pandas
 numpy
 pillow
-plotly==5.18.0
+plotly
 streamlit-option-menu
 tensorflow-cpu
