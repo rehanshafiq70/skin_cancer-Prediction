@@ -4,4 +4,4 @@ numpy
 pillow
 plotly
 streamlit-option-menu
-tensorflow-cpu
+tensorflow-cpu==2.15.0
