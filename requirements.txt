@@ -1,0 +1,7 @@
+streamlit
+pandas
+numpy
+pillow
+plotly
+streamlit-option-menu
+tensorflow-cpu
