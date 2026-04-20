@@ -1,29 +1,22 @@
 import numpy as np
-from PIL import Image
 
-IMG_SIZE = 224
+def preprocess(img):
 
-def preprocess_image(image):
+    img = img.resize((224,224))
+    img = np.array(img)/255.0
 
-    image = image.resize((IMG_SIZE, IMG_SIZE))
-    image = np.array(image) / 255.0
-
-    if image.std() < 0.02:
+    if img.std() < 0.02:
         return None
 
-    image = np.expand_dims(image, axis=0)
-    return image
+    img = np.expand_dims(img,0)
+    return img
 
 
-def predict(model, img):
+def predict(model,img):
 
-    pred = model.predict(img)[0][0]
+    p = model.predict(img)[0][0]
 
-    if pred > 0.5:
-        label = "Malignant"
-        confidence = pred * 100
+    if p > 0.5:
+        return "Malignant", p*100, p
     else:
-        label = "Benign"
-        confidence = (1 - pred) * 100
-
-    return label, confidence, pred
+        return "Benign", (1-p)*100, p
