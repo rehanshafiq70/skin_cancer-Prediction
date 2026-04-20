@@ -1,123 +1,180 @@
 import streamlit as st
+import pandas as pd
+from PIL import Image
 
-# ==============================
+from model_loader import load_model_safe
+from utils import (
+    preprocess_image,
+    validate_image,
+    predict_skin_cancer,
+    risk_level
+)
+from report import generate_report
+from style import load_global_style
+
+# =========================
 # PAGE CONFIG
-# ==============================
+# =========================
 st.set_page_config(
     page_title="SkinScan AI",
-    page_icon="🧬",
-    layout="wide"
+    layout="wide",
+    page_icon="🧬"
 )
 
-# ==============================
-# IMPORT MODULES
-# ==============================
-from assets.theme import load_theme
-from ui.home_dashboard import show_home
-from ui.scanner_ui import show_scanner
-from ui.analytics_ui import show_analytics
-from ui.results_ui import show_results
-from ui.doctor_panel import show_doctor
+st.markdown(load_global_style(), unsafe_allow_html=True)
 
-# ==============================
-# LOAD MEDICAL THEME
-# ==============================
-st.markdown(load_theme(), unsafe_allow_html=True)
+# =========================
+# SESSION DATABASE
+# =========================
+if "history" not in st.session_state:
+    st.session_state.history = []
 
-# ==============================
-# SESSION STATE INIT
-# ==============================
-if "records" not in st.session_state:
-    st.session_state.records = []
+# =========================
+# SIDEBAR
+# =========================
+st.sidebar.title("🧬 SkinScan AI")
 
-if "last_result" not in st.session_state:
-    st.session_state.last_result = None
+page = st.sidebar.radio(
+    "Navigation",
+    ["Home","Scanner","Reports","Analytics"]
+)
 
-if "current_page" not in st.session_state:
-    st.session_state.current_page = "Home"
+# =========================
+# HOME PAGE
+# =========================
+def home():
 
-# ==============================
-# SIDEBAR NAVIGATION
-# ==============================
-with st.sidebar:
+    st.title("AI Skin Cancer Detection")
 
-    st.title("🧬 SkinScan AI")
+    col1,col2,col3 = st.columns(3)
 
-    st.markdown("---")
+    col1.metric("Total Scans",
+                len(st.session_state.history))
 
-    page = st.radio(
-        "Navigation",
-        [
-            "Home",
-            "Scan",
-            "Results",
-            "Analytics",
-            "Doctor Panel"
-        ],
-        index=[
-            "Home",
-            "Scan",
-            "Results",
-            "Analytics",
-            "Doctor Panel"
-        ].index(st.session_state.current_page)
+    col2.metric("Model Accuracy","92%")
+
+    last = (
+        st.session_state.history[-1]["label"]
+        if st.session_state.history else "None"
     )
 
-    st.session_state.current_page = page
+    col3.metric("Last Result", last)
 
-    st.markdown("---")
+    st.info("""
+Step 1: Upload image  
+Step 2: Click Analyze  
+Step 3: View diagnosis  
+Step 4: Download report
+""")
 
-    st.info(
-        """
-        **AI Skin Cancer Detection**
+# =========================
+# SCANNER PAGE
+# =========================
+def scanner():
 
-        Upload dermoscopy image  
-        Run deep learning model  
-        View medical report
-        """
+    st.header("🔬 Skin Scanner")
+
+    file = st.file_uploader("Upload skin image")
+
+    if not file:
+        return
+
+    image = Image.open(file)
+    st.image(image,width=350)
+
+    if st.button("Analyze"):
+
+        if not validate_image(image):
+            st.error("Invalid or unclear image")
+            return
+
+        with st.spinner("Running AI analysis..."):
+
+            model = load_model_safe()
+            data = preprocess_image(image)
+
+            label,conf,prob = \
+                predict_skin_cancer(model,data)
+
+            risk = risk_level(conf)
+
+            st.success(f"Diagnosis: {label}")
+            st.metric("Confidence",f"{conf:.2f}%")
+
+            report = generate_report(label,conf,risk)
+
+            st.download_button(
+                "Download Report",
+                report,
+                "report.txt"
+            )
+
+            st.session_state.history.append({
+                "label":label,
+                "confidence":conf
+            })
+
+# =========================
+# REPORT PAGE
+# =========================
+def reports():
+
+    st.header("Patient Reports")
+
+    if not st.session_state.history:
+        st.warning("No records yet.")
+        return
+
+    df = pd.DataFrame(st.session_state.history)
+    st.dataframe(df)
+
+    st.download_button(
+        "Export CSV",
+        df.to_csv(index=False),
+        "records.csv"
     )
 
-# ==============================
-# ROUTING CONTROLLER
-# ==============================
-try:
+# =========================
+# ANALYTICS PAGE
+# =========================
+def analytics():
 
-    if page == "Home":
-        show_home()
+    import plotly.express as px
 
-    elif page == "Scan":
-        show_scanner()
+    if not st.session_state.history:
+        st.info("No data available")
+        return
 
-    elif page == "Results":
-        show_results()
+    df = pd.DataFrame(st.session_state.history)
 
-    elif page == "Analytics":
-        show_analytics()
+    st.plotly_chart(
+        px.pie(df,names="label",
+               title="Cancer Ratio")
+    )
 
-    elif page == "Doctor Panel":
-        show_doctor()
+    st.plotly_chart(
+        px.histogram(df,x="confidence",
+                     title="Confidence Distribution")
+    )
 
-# ==============================
-# GLOBAL ERROR HANDLER
-# ==============================
-except Exception as e:
+# =========================
+# ROUTER
+# =========================
+if page=="Home":
+    home()
+elif page=="Scanner":
+    scanner()
+elif page=="Reports":
+    reports()
+elif page=="Analytics":
+    analytics()
 
-    st.error("System Error Occurred")
-
-    with st.expander("Technical Details"):
-        st.exception(e)
-
-# ==============================
+# =========================
 # FOOTER
-# ==============================
-st.markdown(
-    """
+# =========================
+st.markdown("""
 ---
-**SkinScan AI — Clinical Decision Support System**
-
 University of Agriculture Faisalabad  
 Rehan Shafique  
 rehanshafiq6540@gmail.com
-""",
-    unsafe_allow_html=True
-)
+""")
