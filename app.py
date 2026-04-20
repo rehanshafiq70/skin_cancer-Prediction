@@ -2,7 +2,6 @@
 =============================================================
 SkinCancerPrediction AI — Medical Diagnostic System v12.0
 University of Agricultural Faisalabad | Rehan Shafique
-Deployment: Streamlit Cloud via GitHub
 =============================================================
 """
 
@@ -14,9 +13,6 @@ import time, datetime, os, uuid, cv2
 import plotly.express as px
 import plotly.graph_objects as go
 
-# ─────────────────────────────────────────────
-# PAGE CONFIG
-# ─────────────────────────────────────────────
 st.set_page_config(
     page_title="SkinCancerPrediction AI",
     page_icon="🧬",
@@ -25,38 +21,28 @@ st.set_page_config(
 )
 
 # ─────────────────────────────────────────────
-# 1. MODEL LOADER
+# 1. MODEL LOADER  ← YOUR REAL FILE ID HERE
 # ─────────────────────────────────────────────
-
-# ⚠️ STEP 1 — Paste your Google Drive File ID here
-# How: Upload skin_cancer_model.h5 to Drive → Share → Copy link
-# Link looks like: https://drive.google.com/file/d/1ABCxyz123.../view
-# Copy only the bold part:                      ^^^^^^^^^^^^
 GDRIVE_FILE_ID = "1Qn5YtgwePAdPyL0eARcc4UoYjy5Kk8PW"
-
-MODEL_PATH = "/tmp/skin_cancer_model.h5"   # writable on Streamlit Cloud
+MODEL_PATH     = "/tmp/skin_cancer_model.h5"
 
 @st.cache_resource(show_spinner=False)
 def load_model_cached():
-    """
-    Downloads model from Google Drive if not present, then loads it.
-    @st.cache_resource ensures it only runs ONCE per deployment.
-    Returns: (model_object | None, status_message)
-    """
-    from tensorflow.keras.models import load_model
+    try:
+        from tensorflow.keras.models import load_model
+    except ImportError:
+        return None, "❌ TensorFlow not installed."
 
     if not os.path.exists(MODEL_PATH):
-        if GDRIVE_FILE_ID == "YOUR_GOOGLE_DRIVE_FILE_ID_HERE":
-            return None, "❌ Set your GDRIVE_FILE_ID in app.py line 27."
         try:
             import gdown
-            url = f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}"
-            gdown.download(url, MODEL_PATH, quiet=False)
+            url = f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}&export=download&confirm=t"
+            gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
         except Exception as e:
             return None, f"❌ Download failed: {e}"
 
     if not os.path.exists(MODEL_PATH):
-        return None, "❌ Model file missing after download attempt."
+        return None, "❌ Model file missing after download."
 
     try:
         model = load_model(MODEL_PATH)
@@ -66,16 +52,15 @@ def load_model_cached():
 
 
 def run_inference(model, pil_image: Image.Image):
-    """Real inference — absolutely no random/dummy fallback."""
     from tensorflow.keras.preprocessing.image import img_to_array
     img = pil_image.convert("RGB").resize((224, 224))
     arr = img_to_array(img) / 255.0
     arr = np.expand_dims(arr, axis=0)
     raw = float(model.predict(arr, verbose=0)[0][0])
     if raw >= 0.5:
-        return "Malignant", raw,     raw
+        return "Malignant", raw, raw
     else:
-        return "Benign",    1 - raw, raw
+        return "Benign", 1 - raw, raw
 
 
 # ─────────────────────────────────────────────
@@ -87,7 +72,7 @@ def validate_image(pil_image: Image.Image):
         errors.append("Image must be RGB.")
     w, h = pil_image.size
     if w < 128 or h < 128:
-        errors.append(f"Too small ({w}×{h} px). Minimum required: 128×128.")
+        errors.append(f"Too small ({w}×{h} px). Minimum: 128×128.")
     arr  = np.array(pil_image.convert("RGB"))
     gray = cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
     lap  = cv2.Laplacian(gray, cv2.CV_64F).var()
@@ -172,10 +157,10 @@ def risk_level(conf: float):
 # 4. REPORT GENERATOR
 # ─────────────────────────────────────────────
 def build_report(record: dict) -> str:
-    info   = CLINICAL[record["AI_Diagnosis"]]
-    rl, _  = risk_level(float(record["Confidence_Raw"]))
-    sep    = "=" * 65
-    lines  = [
+    info  = CLINICAL[record["AI_Diagnosis"]]
+    rl, _ = risk_level(float(record["Confidence_Raw"]))
+    sep   = "=" * 65
+    lines = [
         sep,
         "     SKINCANCERPREDICTION AI — DIAGNOSTIC REPORT v12.0",
         "     University of Agricultural Faisalabad",
@@ -352,7 +337,7 @@ def render_sidebar(model, model_msg):
 
 
 # ─────────────────────────────────────────────
-# 8. HOME
+# 8. HOME PAGE
 # ─────────────────────────────────────────────
 def page_home():
     st.markdown("""
@@ -379,7 +364,6 @@ def page_home():
             st.session_state.page = "AI Scanner"; st.rerun()
 
     st.markdown("<br>", unsafe_allow_html=True)
-
     st.markdown("<div class='sec-title'>📋 How It Works</div>", unsafe_allow_html=True)
     st.markdown("<div class='glass'>", unsafe_allow_html=True)
     for i, s in enumerate([
@@ -415,7 +399,7 @@ def page_home():
 
     st.markdown("<br><div class='sec-title'>📊 Training Dataset (ISIC Melanoma — Kaggle)</div>",
                 unsafe_allow_html=True)
-    for col,(val,lbl,sub) in zip(st.columns(4),[
+    for col, (val, lbl, sub) in zip(st.columns(4), [
         ("33,126","Total Images","ISIC Archive"),
         ("26,501","Benign Samples","≈ 80%"),
         ("6,625", "Malignant Samples","≈ 20%"),
@@ -438,13 +422,12 @@ def page_scanner(model, model_msg):
                 unsafe_allow_html=True)
 
     if model is None:
-        st.error(
-            f"**Model not available.** {model_msg}\n\n"
-            "**To fix:**\n"
-            "1. Upload `skin_cancer_model.h5` to Google Drive and make it publicly shareable.\n"
-            "2. Copy the **File ID** from the share link.\n"
-            "3. Open `app.py` → line 27 → replace `YOUR_GOOGLE_DRIVE_FILE_ID_HERE` with your ID.\n"
-            "4. Commit to GitHub — Streamlit Cloud will restart automatically."
+        st.error(f"**Model not available.** {model_msg}")
+        st.info(
+            "**Troubleshooting:**\n\n"
+            "1. Make sure your Google Drive file is set to **'Anyone with the link'** → Viewer.\n"
+            "2. Check Streamlit Cloud logs for the exact download error.\n"
+            "3. Try re-deploying the app from Streamlit Cloud dashboard."
         )
         return
 
@@ -472,8 +455,7 @@ def page_scanner(model, model_msg):
         if pil_img and scan_btn:
             errs = validate_image(pil_img)
             if errs:
-                st.error("❌ **Invalid or unclear image. Please upload a proper dermoscopic skin image.**\n\n"
-                         + "\n".join(f"• {e}" for e in errs))
+                st.error("❌ **Invalid or unclear image.**\n\n" + "\n".join(f"• {e}" for e in errs))
                 return
 
             with st.spinner("Extracting feature vectors — running CNN inference..."):
@@ -497,34 +479,26 @@ def page_scanner(model, model_msg):
             }
             st.session_state.registry.append(record)
 
-            # Result card
             st.markdown(f"""
             <div class='glass' style='border-color:{info["color"]}55;'>
                 <div style='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;'>
                     <div>
-                        <div style='font-size:.7rem;color:#64748b;font-family:"DM Mono",monospace;
-                             letter-spacing:2px;'>AI DIAGNOSIS</div>
-                        <div style='font-size:2.2rem;font-weight:800;color:{info["color"]};'>
-                            {diagnosis.upper()}
-                        </div>
+                        <div style='font-size:.7rem;color:#64748b;font-family:"DM Mono",monospace;letter-spacing:2px;'>AI DIAGNOSIS</div>
+                        <div style='font-size:2.2rem;font-weight:800;color:{info["color"]};'>{diagnosis.upper()}</div>
                     </div>
                     <div style='text-align:right;'>
-                        <span style='background:{info["badge_bg"]};color:{info["color"]};
-                              border:1px solid {info["color"]}44;border-radius:8px;
-                              padding:.3rem 1rem;font-weight:700;font-family:"DM Mono",monospace;
+                        <span style='background:{info["badge_bg"]};color:{info["color"]};border:1px solid {info["color"]}44;
+                              border-radius:8px;padding:.3rem 1rem;font-weight:700;font-family:"DM Mono",monospace;
                               font-size:.95rem;letter-spacing:1.5px;'>{info["risk_label"]}</span>
                         <br><br>
                         <span style='background:rgba(0,0,0,.3);color:{rc};border:1px solid {rc}44;
                               border-radius:6px;padding:.2rem .8rem;font-weight:600;
-                              font-family:"DM Mono",monospace;font-size:.75rem;'>
-                            ⚠ RISK: {rl}
-                        </span>
+                              font-family:"DM Mono",monospace;font-size:.75rem;'>⚠ RISK: {rl}</span>
                     </div>
                 </div>
                 <div style='color:#94a3b8;font-size:.84rem;margin-top:.8rem;'>{info["desc"]}</div>
             </div>""", unsafe_allow_html=True)
 
-            # Gauge + Probability bars
             c1, c2 = st.columns(2)
             with c1:
                 fig_g = go.Figure(go.Indicator(
@@ -560,10 +534,8 @@ def page_scanner(model, model_msg):
                 st.plotly_chart(fig_b, use_container_width=True)
 
             if confidence < 0.60:
-                st.warning(f"⚠ Low confidence ({confidence*100:.1f}%). "
-                           "Upload a sharper, higher-resolution image for a more reliable result.")
+                st.warning(f"⚠ Low confidence ({confidence*100:.1f}%). Upload a sharper image.")
 
-            # Clinical tabs
             st.markdown("<div class='sec-title'>📋 Clinical Recommendations</div>", unsafe_allow_html=True)
             t1, t2, t3 = st.tabs(["🩺 Treatments","🛡️ Patient Care","🔭 Monitoring"])
             for tab, key in [(t1,"treatments"),(t2,"patient_care"),(t3,"monitoring")]:
@@ -572,7 +544,6 @@ def page_scanner(model, model_msg):
                         st.markdown(f"<div class='rec-item'><span class='rec-num'>{i:02d}</span>"
                                     f"<span>{item}</span></div>", unsafe_allow_html=True)
 
-            # Action buttons
             st.markdown("<br>", unsafe_allow_html=True)
             b1, b2, b3 = st.columns(3)
             with b1:
@@ -603,7 +574,6 @@ def page_scanner(model, model_msg):
          background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);
          font-size:.76rem;color:#fbbf24;font-family:"DM Mono",monospace;'>
         ⚠ DISCLAIMER — Screening aid only. Does not replace professional medical diagnosis.
-        All results require clinical confirmation by a licensed dermatologist.
     </div>""", unsafe_allow_html=True)
 
 
@@ -623,7 +593,7 @@ def page_analytics():
     ben      = total - mal; avg = df["CP"].mean(); crit = (df["Risk_Level"]=="CRITICAL").sum()
 
     for col,(val,lbl,color) in zip(st.columns(5),[
-        (total,f"Total Scans","#38bdf8"),(ben,"Benign","#10b981"),
+        (total,"Total Scans","#38bdf8"),(ben,"Benign","#10b981"),
         (mal,"Malignant","#ef4444"),(f"{avg:.1f}%","Avg Confidence","#a78bfa"),
         (crit,"Critical Alerts","#f59e0b"),
     ]):
@@ -634,9 +604,7 @@ def page_analytics():
 
     st.markdown("<br>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
-
-    base = dict(paper_bgcolor="rgba(0,0,0,0)", font_color="#e2e8f0",
-                title_font_color="#38bdf8")
+    base = dict(paper_bgcolor="rgba(0,0,0,0)", font_color="#e2e8f0", title_font_color="#38bdf8")
 
     with c1:
         f = px.pie(df, names="AI_Diagnosis", title="Diagnosis Distribution", hole=.45,
@@ -745,7 +713,7 @@ def main():
     inject_css()
     init_state()
 
-    with st.spinner("Initialising CNN model..."):
+    with st.spinner("Initialising CNN model — downloading from Drive if needed..."):
         model, model_msg = load_model_cached()
 
     render_sidebar(model, model_msg)
