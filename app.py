@@ -21,7 +21,7 @@ st.set_page_config(
 )
 
 # ─────────────────────────────────────────────
-# 1. MODEL LOADER  ← YOUR REAL FILE ID HERE
+# 1. MODEL LOADER
 # ─────────────────────────────────────────────
 GDRIVE_FILE_ID = "1Qn5YtgwePAdPyL0eARcc4UoYjy5Kk8PW"
 MODEL_PATH     = "/tmp/skin_cancer_model.h5"
@@ -34,21 +34,67 @@ def load_model_cached():
         return None, "❌ TensorFlow not installed."
 
     if not os.path.exists(MODEL_PATH):
+        downloaded = False
+
+        # ── Method 1: gdown (no fuzzy arg — compatible with all versions) ──
         try:
             import gdown
             url = f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}&export=download&confirm=t"
-            gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
-        except Exception as e:
-            return None, f"❌ Download failed: {e}"
+            gdown.download(url, MODEL_PATH, quiet=False)
+            if os.path.exists(MODEL_PATH) and os.path.getsize(MODEL_PATH) > 100_000:
+                downloaded = True
+        except Exception:
+            if os.path.exists(MODEL_PATH):
+                os.remove(MODEL_PATH)
 
-    if not os.path.exists(MODEL_PATH):
-        return None, "❌ Model file missing after download."
+        # ── Method 2: requests fallback ──
+        if not downloaded:
+            try:
+                import requests
+                session = requests.Session()
+                # Step 1 — get confirm token for large files
+                resp = session.get(
+                    "https://drive.google.com/uc",
+                    params={"id": GDRIVE_FILE_ID, "export": "download"},
+                    stream=True, timeout=30
+                )
+                token = None
+                for key, val in resp.cookies.items():
+                    if key.startswith("download_warning"):
+                        token = val
+                        break
+                # Step 2 — actual download
+                params = {"id": GDRIVE_FILE_ID, "export": "download", "confirm": token or "t"}
+                resp2  = session.get(
+                    "https://drive.google.com/uc",
+                    params=params, stream=True, timeout=300
+                )
+                resp2.raise_for_status()
+                with open(MODEL_PATH, "wb") as f:
+                    for chunk in resp2.iter_content(chunk_size=32768):
+                        if chunk:
+                            f.write(chunk)
+                if os.path.exists(MODEL_PATH) and os.path.getsize(MODEL_PATH) > 100_000:
+                    downloaded = True
+            except Exception as e2:
+                if os.path.exists(MODEL_PATH):
+                    os.remove(MODEL_PATH)
 
+        if not downloaded:
+            return None, (
+                "❌ Download failed. Please ensure:\n"
+                "• Drive file is shared → 'Anyone with the link → Viewer'\n"
+                "• File ID is correct: " + GDRIVE_FILE_ID
+            )
+
+    # ── Load model ──
     try:
         model = load_model(MODEL_PATH)
         return model, "✅ CNN Model loaded"
     except Exception as e:
-        return None, f"❌ Load error: {e}"
+        if os.path.exists(MODEL_PATH):
+            os.remove(MODEL_PATH)
+        return None, f"❌ Model load error: {e}"
 
 
 def run_inference(model, pil_image: Image.Image):
@@ -212,41 +258,33 @@ def inject_css():
     .block-container{padding:1.5rem 2.5rem 4rem;max-width:1400px;margin:0 auto;}
     [data-testid="stSidebar"]{background:var(--surface)!important;border-right:1px solid var(--border);}
     [data-testid="stSidebar"] *{color:var(--text)!important;}
-
     .glass{background:linear-gradient(135deg,rgba(15,30,46,.85),rgba(11,21,32,.9));
            border:1px solid var(--border);border-radius:16px;padding:1.6rem 1.8rem;
            backdrop-filter:blur(14px);margin-bottom:1.2rem;transition:border-color .25s;}
     .glass:hover{border-color:var(--border-hi);}
-
     .neon-title{font-weight:800;font-size:2.6rem;letter-spacing:-.5px;line-height:1.1;
                 background:linear-gradient(120deg,#38bdf8 0%,#818cf8 50%,#f472b6 100%);
                 -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
     .sec-title{font-weight:700;font-size:1.35rem;color:var(--accent);margin-bottom:.3rem;}
-    .mono{font-family:var(--fm);color:var(--accent);font-size:.82rem;}
-
     .metric-tile{background:var(--surface2);border:1px solid var(--border);border-radius:14px;
                  padding:1.1rem;text-align:center;transition:transform .2s,border-color .2s;}
     .metric-tile:hover{transform:translateY(-3px);border-color:var(--border-hi);}
     .metric-val{font-size:1.8rem;font-weight:800;color:var(--accent);}
     .metric-lbl{font-size:.73rem;color:var(--muted);margin-top:.2rem;font-family:var(--fm);}
-
     .step-item{display:flex;align-items:center;gap:.9rem;padding:.7rem 1rem;
                border-left:3px solid var(--accent);background:rgba(56,189,248,.04);
                border-radius:0 10px 10px 0;margin-bottom:.5rem;}
     .step-num{background:var(--accent);color:#050a0e;border-radius:50%;width:26px;height:26px;
               font-weight:800;font-size:.8rem;display:flex;align-items:center;
               justify-content:center;flex-shrink:0;}
-
     .feat-card{background:var(--surface2);border:1px solid var(--border);
                border-radius:14px;padding:1.2rem;text-align:center;}
     .feat-icon{font-size:2rem;margin-bottom:.5rem;}
     .feat-name{font-weight:700;font-size:1rem;color:var(--accent);}
     .feat-desc{font-size:.78rem;color:var(--muted);margin-top:.3rem;}
-
     .rec-item{display:flex;align-items:flex-start;gap:.6rem;padding:.55rem 0;
               border-bottom:1px solid rgba(56,189,248,.06);font-size:.88rem;}
     .rec-num{color:var(--accent);font-weight:700;min-width:1.3rem;font-family:var(--fm);}
-
     .stButton>button{background:linear-gradient(135deg,#0369a1,#1d4ed8)!important;
                      color:white!important;border:none!important;border-radius:10px!important;
                      font-weight:700!important;letter-spacing:.8px!important;
@@ -268,8 +306,6 @@ def inject_css():
                        border-radius:8px!important;color:var(--text)!important;
                        font-family:var(--fm)!important;}
     hr{border-color:var(--border)!important;}
-    [data-testid="stDataFrame"]{border-radius:12px!important;overflow:hidden;}
-
     .status-bar{border-radius:10px;padding:.5rem 1rem;font-size:.8rem;font-family:var(--fm);
                 display:flex;align-items:center;gap:.5rem;}
     .s-online{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);color:#10b981;}
@@ -422,12 +458,13 @@ def page_scanner(model, model_msg):
                 unsafe_allow_html=True)
 
     if model is None:
-        st.error(f"**Model not available.** {model_msg}")
+        st.error(f"**Model not available.**\n\n{model_msg}")
         st.info(
-            "**Troubleshooting:**\n\n"
-            "1. Make sure your Google Drive file is set to **'Anyone with the link'** → Viewer.\n"
-            "2. Check Streamlit Cloud logs for the exact download error.\n"
-            "3. Try re-deploying the app from Streamlit Cloud dashboard."
+            "**Quick Fix:**\n\n"
+            "1. Open Google Drive → find `skin_cancer_model.h5`\n"
+            "2. Right-click → **Share** → **Anyone with the link** → **Viewer** → Save\n"
+            "3. Go to Streamlit Cloud → **Reboot app** from top-right ⋮ menu\n"
+            "4. Wait ~30–60 seconds for model to download on first boot"
         )
         return
 
