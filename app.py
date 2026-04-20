@@ -32,7 +32,7 @@ st.set_page_config(
 # How: Upload skin_cancer_model.h5 to Drive → Share → Copy link
 # Link looks like: https://drive.google.com/file/d/1ABCxyz123.../view
 # Copy only the bold part:                      ^^^^^^^^^^^^
-GDRIVE_FILE_ID = "YOUR_GOOGLE_DRIVE_FILE_ID_HERE"
+GDRIVE_FILE_ID = "1ABCxyzYourActualIDHere"
 
 MODEL_PATH = "/tmp/skin_cancer_model.h5"   # writable on Streamlit Cloud
 
