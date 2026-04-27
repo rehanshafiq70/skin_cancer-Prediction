@@ -52,7 +52,7 @@ def inject_css(theme: str = "dark"):
         DIV       = "rgba(37,99,235,0.13)"
         HERO_G1   = "rgba(37,99,235,0.18)"
         HERO_G2   = "rgba(20,184,166,0.10)"
-        FOOTER_BG = "rgba(2,8,18,0.95)"
+        FOOTER_BG = "rgba(2,8,18,0.97)"
         CARD_HOVER= "rgba(10,35,70,0.95)"
     else:
         BG        = "#f0f5fc"
@@ -102,6 +102,7 @@ def inject_css(theme: str = "dark"):
         padding-right: 2rem !important;
         max-width: 1360px !important;
         margin: 0 auto !important;
+        overflow-x: hidden !important;
     }}
     @media (max-width: 768px) {{
         .block-container {{
@@ -513,18 +514,26 @@ def inject_css(theme: str = "dark"):
     }}
 
     /* ════════════════════════════════════════════════════════
-       ENTERPRISE FOOTER  ── v15
+       ENTERPRISE FOOTER  ── v15  ✅ FIXED
     ════════════════════════════════════════════════════════ */
+
+    /* Footer wrapper — breaks out of Streamlit block-container */
+    .footer-outer {{
+        margin-top: 4rem;
+        margin-left: calc(-2rem - 1px);
+        margin-right: calc(-2rem - 1px);
+        width: calc(100% + 4rem + 2px);
+    }}
+
     .site-footer {{
         background: {FOOTER_BG};
         backdrop-filter: blur(24px) saturate(180%);
         -webkit-backdrop-filter: blur(24px) saturate(180%);
-        border-top: 1px solid rgba(37,99,235,0.20);
-        margin-top: 4rem;
-        padding: 0;
+        border-top: 1px solid rgba(37,99,235,0.22);
         position: relative;
         overflow: hidden;
         animation: fade-in 0.8s ease;
+        width: 100%;
     }}
 
     /* Decorative top gradient line */
@@ -533,6 +542,7 @@ def inject_css(theme: str = "dark"):
         position: absolute; top: 0; left: 0; right: 0; height: 2px;
         background: linear-gradient(90deg,
             transparent 0%, #2563eb 20%, #14b8a6 50%, #8b5cf6 80%, transparent 100%);
+        z-index: 2;
     }}
 
     /* Subtle grid background */
@@ -540,76 +550,112 @@ def inject_css(theme: str = "dark"):
         content: '';
         position: absolute; inset: 0; pointer-events: none;
         background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%232563eb' fill-opacity='0.012'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        z-index: 0;
     }}
 
     .footer-inner {{
-        position: relative; z-index: 1;
-        max-width: 1320px; margin: 0 auto;
-        padding: 0 2rem;
+        position: relative;
+        z-index: 1;
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 0 2.5rem;
+        box-sizing: border-box;
     }}
 
-    /* Top section */
+    /* ── Top 4-column grid ── */
     .footer-top {{
         display: grid;
         grid-template-columns: 1.8fr 1fr 1fr 1.2fr;
-        gap: 40px;
+        gap: 48px;
         padding: 3.5rem 0 2.5rem;
-        border-bottom: 1px solid rgba(37,99,235,0.12);
-    }}
-    @media (max-width: 900px) {{
-        .footer-top {{ grid-template-columns: 1fr 1fr; gap: 28px; padding: 2.5rem 0 2rem; }}
-    }}
-    @media (max-width: 550px) {{
-        .footer-top {{ grid-template-columns: 1fr; gap: 22px; padding: 2rem 0 1.5rem; }}
+        border-bottom: 1px solid rgba(37,99,235,0.14);
+        align-items: start;
     }}
 
     /* Brand block */
-    .footer-brand {{ }}
     .footer-brand-logo {{
-        display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
     }}
     .footer-brand-icon {{
         font-size: 1.8rem;
         filter: drop-shadow(0 0 10px rgba(20,184,166,0.5));
         animation: logo-pulse 3s ease-in-out infinite;
+        flex-shrink: 0;
     }}
     .footer-brand-name {{
-        font-family: 'Oxanium', sans-serif; font-size: 1.15rem; font-weight: 800;
+        font-family: 'Oxanium', sans-serif;
+        font-size: 1.15rem;
+        font-weight: 800;
         background: linear-gradient(135deg, #3b82f6 0%, #14b8a6 55%, #8b5cf6 100%);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         letter-spacing: 0.2px;
+        line-height: 1.2;
     }}
     .footer-brand-tagline {{
-        font-size: 0.72rem; color: {SUB}; letter-spacing: 1.5px;
-        text-transform: uppercase; font-weight: 500;
+        font-size: 0.68rem;
+        color: {SUB};
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        font-weight: 500;
+        line-height: 1.3;
     }}
     .footer-brand-desc {{
-        font-size: 0.82rem; color: {SUB}; line-height: 1.7; margin-bottom: 18px;
-        max-width: 310px;
+        font-size: 0.82rem;
+        color: {SUB};
+        line-height: 1.75;
+        margin-bottom: 18px;
+        max-width: 300px;
     }}
+
+    /* Tech chips */
     .footer-tech-stack {{
-        display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 20px;
     }}
     .ftech-chip {{
-        background: rgba(37,99,235,0.10); border: 1px solid rgba(37,99,235,0.20);
-        color: #60a5fa; font-size: 0.62rem; font-weight: 600;
-        padding: 3px 10px; border-radius: 6px; letter-spacing: 0.5px;
+        background: rgba(37,99,235,0.10);
+        border: 1px solid rgba(37,99,235,0.22);
+        color: #60a5fa;
+        font-size: 0.61rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 6px;
+        letter-spacing: 0.4px;
         transition: all 0.2s;
+        white-space: nowrap;
     }}
     .ftech-chip:hover {{
-        background: rgba(37,99,235,0.20); transform: translateY(-1px);
+        background: rgba(37,99,235,0.20);
+        transform: translateY(-1px);
         box-shadow: 0 3px 8px rgba(37,99,235,0.20);
     }}
 
     /* Social icons */
-    .footer-social {{ display: flex; gap: 10px; margin-top: 4px; }}
+    .footer-social {{
+        display: flex;
+        gap: 10px;
+        margin-top: 4px;
+        flex-wrap: wrap;
+    }}
     .social-btn {{
-        width: 40px; height: 40px; border-radius: 10px;
-        display: inline-flex; align-items: center; justify-content: center;
-        font-size: 1.1rem; text-decoration: none; transition: all 0.28s cubic-bezier(.34,1.56,.64,1);
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: all 0.28s cubic-bezier(.34,1.56,.64,1);
         border: 1px solid rgba(37,99,235,0.25);
         background: rgba(37,99,235,0.08);
-        cursor: pointer; position: relative;
+        cursor: pointer;
+        flex-shrink: 0;
     }}
     .social-btn:hover {{
         transform: translateY(-5px) scale(1.12);
@@ -621,89 +667,207 @@ def inject_css(theme: str = "dark"):
 
     /* Footer nav columns */
     .footer-col-title {{
-        font-size: 0.72rem; font-weight: 700; color: {TEXT};
-        text-transform: uppercase; letter-spacing: 2px;
-        margin-bottom: 16px; display: flex; align-items: center; gap: 7px;
+        font-size: 0.70rem;
+        font-weight: 700;
+        color: {TEXT};
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
     }}
     .footer-col-title::before {{
-        content: ''; display: inline-block; width: 14px; height: 2px;
-        background: linear-gradient(90deg, #2563eb, #14b8a6); border-radius: 2px;
+        content: '';
+        display: inline-block;
+        width: 14px;
+        height: 2px;
+        background: linear-gradient(90deg, #2563eb, #14b8a6);
+        border-radius: 2px;
+        flex-shrink: 0;
     }}
     .footer-nav-link {{
-        display: block; font-size: 0.82rem; color: {SUB};
-        text-decoration: none; margin-bottom: 9px;
-        padding: 3px 0; transition: all 0.2s;
+        display: block;
+        font-size: 0.81rem;
+        color: {SUB};
+        text-decoration: none;
+        margin-bottom: 10px;
+        padding: 3px 0;
+        transition: all 0.2s;
         cursor: pointer;
+        white-space: nowrap;
     }}
-    .footer-nav-link:hover {{ color: #60a5fa; padding-left: 6px; }}
+    .footer-nav-link:hover {{
+        color: #60a5fa;
+        padding-left: 6px;
+    }}
 
     /* Contact block */
     .footer-contact-item {{
-        display: flex; align-items: flex-start; gap: 10px;
-        margin-bottom: 14px; font-size: 0.82rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 14px;
+        font-size: 0.81rem;
     }}
     .fci-icon {{
-        width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 0.95rem; background: rgba(37,99,235,0.12);
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        background: rgba(37,99,235,0.12);
         border: 1px solid rgba(37,99,235,0.20);
     }}
-    .fci-label {{ font-size: 0.65rem; color: {SUB}; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 2px; }}
-    .fci-value {{ color: {TEXT}; font-weight: 500; word-break: break-all; }}
+    .fci-label {{
+        font-size: 0.63rem;
+        color: {SUB};
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        margin-bottom: 3px;
+    }}
+    .fci-value {{
+        color: {TEXT};
+        font-weight: 500;
+        word-break: break-all;
+        line-height: 1.4;
+    }}
     .fci-value a {{
-        color: #60a5fa; text-decoration: none; transition: color 0.2s;
+        color: #60a5fa;
+        text-decoration: none;
+        transition: color 0.2s;
     }}
     .fci-value a:hover {{ color: #2dd4bf; }}
 
     /* Email copy button */
     .email-copy-btn {{
-        display: inline-flex; align-items: center; gap: 5px;
-        font-size: 0.72rem; color: {SUB}; cursor: pointer;
-        background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.18);
-        padding: 3px 10px; border-radius: 6px; margin-top: 4px;
-        transition: all 0.2s; user-select: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.70rem;
+        color: {SUB};
+        cursor: pointer;
+        background: rgba(37,99,235,0.08);
+        border: 1px solid rgba(37,99,235,0.18);
+        padding: 3px 10px;
+        border-radius: 6px;
+        margin-top: 5px;
+        transition: all 0.2s;
+        user-select: none;
+        width: fit-content;
     }}
     .email-copy-btn:hover {{ background: rgba(37,99,235,0.18); color: #60a5fa; }}
 
-    /* Certifications / badges row */
+    /* Badges row */
     .footer-badges {{
-        display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 20px 0 4px;
+        border-top: 1px solid rgba(37,99,235,0.10);
     }}
     .fbadge {{
-        display: inline-flex; align-items: center; gap: 5px;
-        background: rgba(37,99,235,0.07); border: 1px solid rgba(37,99,235,0.16);
-        color: {SUB}; font-size: 0.65rem; font-weight: 600;
-        padding: 5px 12px; border-radius: 8px; letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(37,99,235,0.07);
+        border: 1px solid rgba(37,99,235,0.16);
+        color: {SUB};
+        font-size: 0.64rem;
+        font-weight: 600;
+        padding: 5px 12px;
+        border-radius: 8px;
+        letter-spacing: 0.4px;
         transition: all 0.2s;
+        white-space: nowrap;
     }}
     .fbadge:hover {{ background: rgba(37,99,235,0.14); color: #60a5fa; }}
 
     /* Bottom bar */
     .footer-bottom {{
-        display: flex; align-items: center;
-        justify-content: space-between; flex-wrap: wrap;
-        gap: 12px; padding: 18px 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 18px 0 22px;
     }}
     .footer-copy {{
-        font-size: 0.76rem; color: {SUB}; line-height: 1.5;
+        font-size: 0.75rem;
+        color: {SUB};
+        line-height: 1.5;
     }}
     .footer-copy strong {{ color: {TEXT}; }}
     .footer-disclaimer {{
-        font-size: 0.68rem; color: rgba(239,68,68,0.75);
-        display: flex; align-items: center; gap: 5px;
+        font-size: 0.68rem;
+        color: rgba(239,68,68,0.75);
+        display: flex;
+        align-items: center;
+        gap: 5px;
     }}
     .footer-version-badge {{
-        background: rgba(37,99,235,0.10); border: 1px solid rgba(37,99,235,0.22);
-        color: #60a5fa; font-size: 0.62rem; font-weight: 700;
-        padding: 3px 10px; border-radius: 6px; letter-spacing: 1px;
+        background: rgba(37,99,235,0.10);
+        border: 1px solid rgba(37,99,235,0.22);
+        color: #60a5fa;
+        font-size: 0.62rem;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 6px;
+        letter-spacing: 1px;
         font-family: 'Space Mono', monospace;
+        white-space: nowrap;
     }}
 
-    /* Mobile footer */
+    /* ── RESPONSIVE BREAKPOINTS ── */
+    @media (max-width: 1100px) {{
+        .footer-top {{
+            grid-template-columns: 1.6fr 1fr 1fr;
+            gap: 32px;
+        }}
+        /* Contact col goes full width below the 3 columns */
+        .footer-top > div:last-child {{
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }}
+        .footer-top > div:last-child .footer-col-title {{
+            grid-column: 1 / -1;
+        }}
+    }}
+
     @media (max-width: 768px) {{
-        .footer-bottom {{ flex-direction: column; text-align: center; gap: 8px; }}
+        .footer-outer {{
+            margin-left: calc(-0.75rem - 1px);
+            margin-right: calc(-0.75rem - 1px);
+            width: calc(100% + 1.5rem + 2px);
+        }}
+        .footer-inner {{
+            padding: 0 1.25rem;
+        }}
+        .footer-top {{
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            padding: 2.5rem 0 2rem;
+        }}
+        .footer-top > div:first-child {{
+            grid-column: 1 / -1;
+        }}
+        .footer-top > div:last-child {{
+            grid-column: 1 / -1;
+        }}
+        .footer-brand-desc {{ max-width: 100%; }}
+        .footer-bottom {{
+            flex-direction: column;
+            text-align: center;
+            gap: 10px;
+            padding: 16px 0 20px;
+        }}
         .footer-badges {{ justify-content: center; }}
-        .footer-social  {{ justify-content: flex-start; }}
         .navbar-shell   {{ padding: 0 12px; height: 58px; }}
         .nav-ai-badge   {{ display: none; }}
         .hero-section   {{ padding: 28px 20px; }}
@@ -711,6 +875,17 @@ def inject_css(theme: str = "dark"):
         .kpi-card       {{ padding: 14px 10px; }}
         .kpi-value      {{ font-size: 1.55rem; }}
         .page-banner    {{ padding: 20px 18px; }}
+    }}
+
+    @media (max-width: 480px) {{
+        .footer-top {{
+            grid-template-columns: 1fr;
+            gap: 22px;
+            padding: 2rem 0 1.5rem;
+        }}
+        .footer-top > div:first-child {{ grid-column: auto; }}
+        .footer-social {{ justify-content: flex-start; }}
+        .footer-tech-stack {{ gap: 5px; }}
     }}
 
     </style>
@@ -756,7 +931,6 @@ class NeuralCoreEngine:
         risk  = "HIGH" if prob >= 0.80 else ("MEDIUM" if prob >= 0.50 else "LOW")
         conf  = min(prob + random.uniform(0.01, 0.05), 0.99)
 
-        # Multi-class sim scores
         scores = self._simulate_class_scores(diag)
 
         return {
@@ -777,7 +951,6 @@ class NeuralCoreEngine:
         return float(self.model.predict(arr, verbose=0)[0][0])
 
     def _blur_detect(self, pil_img):
-        """Returns blur variance score — higher = sharper"""
         gray = np.array(pil_img.convert("L"), dtype=float)
         laplacian = np.array([[ 0, 1, 0],[1,-4,1],[0, 1, 0]])
         from scipy.ndimage import convolve  # type: ignore
@@ -1159,7 +1332,7 @@ class SkinScanApp:
             "Medical Guide": self._medical_guide,
             "About":         self._about,
         }.get(nav, self._home)()
-      
+        self._footer()
 
     # ══════════════════════════════════════════════════════════════
     #  PAGE: HOME
@@ -1230,7 +1403,6 @@ class SkinScanApp:
                 </div>
                 """, unsafe_allow_html=True)
 
-        # Stats bar
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.markdown('<div class="sec-head"><span></span>📊 Platform Statistics</div>', unsafe_allow_html=True)
@@ -1260,7 +1432,6 @@ class SkinScanApp:
         </div>
         """, unsafe_allow_html=True)
 
-        # Medical disclaimer
         st.markdown("""
         <div class="disclaimer-banner">
             ⚠️ <strong>Medical Disclaimer:</strong> This AI tool is for <strong>research and educational purposes only</strong>.
@@ -1321,7 +1492,6 @@ class SkinScanApp:
                 if img_ok and st.button("🔄 Retake Photo"):
                     raw_img = None; img_ok = False; st.rerun()
 
-            # Before/After compare toggle
             if img_ok and st.session_state.get("proc_img"):
                 st.markdown("<br>", unsafe_allow_html=True)
                 if st.checkbox("🔀 Show Before / After Preprocessing"):
@@ -1383,7 +1553,6 @@ class SkinScanApp:
                 </div>
                 """, unsafe_allow_html=True)
 
-                # Blur warning
                 blur = res.get("blur_score", 999)
                 if blur < 80:
                     st.warning(f"⚠️ **Blur Detected** — Image sharpness score: {blur:.0f} (threshold: 80). Results may be less accurate. Retake with a clearer image.")
@@ -1398,7 +1567,6 @@ class SkinScanApp:
                     <span class="badge {bc}">● {res['risk_level']}</span>
                 </div>""", unsafe_allow_html=True)
 
-                # Confidence gauge
                 fig_g = go.Figure(go.Indicator(
                     mode="gauge+number",
                     value=res["confidence"]*100,
@@ -1429,7 +1597,6 @@ class SkinScanApp:
                 </div>
                 """, unsafe_allow_html=True)
 
-        # Clinical Engine
         if st.session_state.result:
             res   = st.session_state.result
             intel = ClinicalProtocols.get(res["diagnosis"])
@@ -1506,8 +1673,7 @@ class SkinScanApp:
                     <div style="font-size:2rem; margin-bottom:8px;">🔥</div>
                     <div style="font-weight:600; margin-bottom:4px; color:#f87171;">Grad-CAM Visualization</div>
                     <div style="font-size:0.78rem;">
-                        Grad-CAM (Gradient-weighted Class Activation Mapping) highlights regions
-                        of the image that most influenced the AI's decision. <br><br>
+                        Grad-CAM highlights regions of the image that most influenced the AI's decision.<br><br>
                         <strong>Red zones</strong> = High activation / suspicious areas<br>
                         <strong>Blue zones</strong> = Low activation / normal tissue<br><br>
                         ⚙️ Full Grad-CAM requires TensorFlow model in online mode.
@@ -1542,7 +1708,7 @@ class SkinScanApp:
                 """, unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════
-    #  PAGE: AI ANALYSIS (dedicated results view)
+    #  PAGE: AI ANALYSIS
     # ══════════════════════════════════════════════════════════════
     def _analysis(self):
         st.markdown("""
@@ -1573,7 +1739,6 @@ class SkinScanApp:
             </div>
             """, unsafe_allow_html=True)
 
-            # Accuracy meter
             fig_acc = go.Figure(go.Indicator(
                 mode="gauge+number+delta",
                 value=res["confidence"]*100,
@@ -1615,7 +1780,6 @@ class SkinScanApp:
                 """, unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # AI Explanation
         st.markdown('<div class="glass-card" style="border-left:3px solid #8b5cf6;">', unsafe_allow_html=True)
         st.markdown('<div class="sec-head"><span></span>🤖 AI Explanation Panel</div>', unsafe_allow_html=True)
         st.markdown(f"""
@@ -1625,7 +1789,6 @@ class SkinScanApp:
         """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # Heatmap placeholder
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.markdown('<div class="sec-head"><span></span>🔥 Grad-CAM Heatmap Visualization</div>', unsafe_allow_html=True)
         h1, h2 = st.columns(2)
@@ -1828,7 +1991,7 @@ class SkinScanApp:
                 st.rerun()
 
     # ══════════════════════════════════════════════════════════════
-    #  PAGE: MEDICAL GUIDE  (NEW)
+    #  PAGE: MEDICAL GUIDE
     # ══════════════════════════════════════════════════════════════
     def _medical_guide(self):
         st.markdown("""
@@ -1839,7 +2002,6 @@ class SkinScanApp:
         </div>
         """, unsafe_allow_html=True)
 
-        # WARNING DISCLAIMER
         st.markdown("""
         <div class="disclaimer-banner" style="margin-bottom:24px;">
             🏥 <strong>For Healthcare Professionals & Patients:</strong> The information below is for
@@ -2090,7 +2252,171 @@ class SkinScanApp:
         st.markdown('</div>', unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════
-  
+    #  ENTERPRISE FOOTER  ── v15  ✅ FIXED
+    # ══════════════════════════════════════════════════════════════
+    def _footer(self):
+        st.markdown("""
+        <!-- Outer wrapper breaks out of Streamlit block-container -->
+        <div class="footer-outer">
+        <div class="site-footer">
+          <div class="footer-inner">
+
+            <!-- TOP SECTION: 4-column grid -->
+            <div class="footer-top">
+
+              <!-- Col 1: Brand -->
+              <div class="footer-brand">
+                <div class="footer-brand-logo">
+                  <span class="footer-brand-icon">🔬</span>
+                  <div>
+                    <div class="footer-brand-name">SkinScan AI</div>
+                    <div class="footer-brand-tagline">Next-Gen Dermatology Intelligence</div>
+                  </div>
+                </div>
+                <p class="footer-brand-desc">
+                  An AI-powered clinical platform for dermoscopic skin lesion analysis.
+                  Developed as a Final Year Project at the University of Agriculture Faisalabad
+                  using deep learning CNN models for benign/malignant classification.
+                </p>
+                <div class="footer-tech-stack">
+                  <span class="ftech-chip">Python</span>
+                  <span class="ftech-chip">Streamlit</span>
+                  <span class="ftech-chip">TensorFlow</span>
+                  <span class="ftech-chip">Plotly</span>
+                  <span class="ftech-chip">PIL</span>
+                  <span class="ftech-chip">ReportLab</span>
+                  <span class="ftech-chip">NumPy</span>
+                  <span class="ftech-chip">Pandas</span>
+                </div>
+                <div class="footer-social">
+                  <a href="https://github.com/rehanshafiq70" target="_blank" class="social-btn github" title="GitHub">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" style="color:#c9d1d9;">
+                      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+                    </svg>
+                  </a>
+                  <a href="https://www.linkedin.com/in/rehanshafiq70" target="_blank" class="social-btn linkedin" title="LinkedIn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#0a66c2;">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                  </a>
+                  <a href="mailto:rehanshafiq6540@gmail.com" class="social-btn email" title="Email">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                      <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Col 2: Platform Links -->
+              <div>
+                <div class="footer-col-title">Platform</div>
+                <span class="footer-nav-link">🏠 Home Dashboard</span>
+                <span class="footer-nav-link">📷 AI Scan Lab</span>
+                <span class="footer-nav-link">🧠 AI Analysis</span>
+                <span class="footer-nav-link">📊 Analytics Dashboard</span>
+                <span class="footer-nav-link">📁 Patient History</span>
+                <span class="footer-nav-link">👨‍⚕️ Medical Guide</span>
+                <span class="footer-nav-link">⚙️ Settings</span>
+              </div>
+
+              <!-- Col 3: Features -->
+              <div>
+                <div class="footer-col-title">Features</div>
+                <span class="footer-nav-link">🧬 Multi-Class CNN</span>
+                <span class="footer-nav-link">🔥 Grad-CAM Heatmap</span>
+                <span class="footer-nav-link">🤖 AI Explanation Panel</span>
+                <span class="footer-nav-link">📷 Live Camera Scan</span>
+                <span class="footer-nav-link">📄 PDF / CSV Reports</span>
+                <span class="footer-nav-link">🛡️ Blur Detection</span>
+                <span class="footer-nav-link">🌓 Dark / Light Mode</span>
+              </div>
+
+              <!-- Col 4: Contact -->
+              <div>
+                <div class="footer-col-title">Developer Contact</div>
+
+                <div class="footer-contact-item">
+                  <div class="fci-icon">👨‍💻</div>
+                  <div>
+                    <div class="fci-label">Developer</div>
+                    <div class="fci-value">Rehan Shafique</div>
+                  </div>
+                </div>
+
+                <div class="footer-contact-item">
+                  <div class="fci-icon">🏫</div>
+                  <div>
+                    <div class="fci-label">Institution</div>
+                    <div class="fci-value">University of Agriculture Faisalabad</div>
+                  </div>
+                </div>
+
+                <div class="footer-contact-item">
+                  <div class="fci-icon">📧</div>
+                  <div>
+                    <div class="fci-label">Email</div>
+                    <div class="fci-value">
+                      <a href="mailto:rehanshafiq6540@gmail.com">rehanshafiq6540@gmail.com</a>
+                    </div>
+                    <div class="email-copy-btn"
+                         onclick="navigator.clipboard.writeText('rehanshafiq6540@gmail.com').then(()=>{this.textContent='✅ Copied!';setTimeout(()=>{this.innerHTML='📋 Copy Email'},2000)})">
+                      📋 Copy Email
+                    </div>
+                  </div>
+                </div>
+
+                <div class="footer-contact-item">
+                  <div class="fci-icon">💼</div>
+                  <div>
+                    <div class="fci-label">LinkedIn</div>
+                    <div class="fci-value">
+                      <a href="https://www.linkedin.com/in/rehanshafiq70" target="_blank">linkedin.com/in/rehanshafiq70</a>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="footer-contact-item">
+                  <div class="fci-icon">🐙</div>
+                  <div>
+                    <div class="fci-label">GitHub</div>
+                    <div class="fci-value">
+                      <a href="https://github.com/rehanshafiq70" target="_blank">github.com/rehanshafiq70</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div><!-- /footer-top -->
+
+            <!-- BADGES ROW -->
+            <div class="footer-badges">
+              <span class="fbadge">🔬 CNN Deep Learning</span>
+              <span class="fbadge">🏥 Clinical Intelligence</span>
+              <span class="fbadge">🧬 Dermoscopy AI</span>
+              <span class="fbadge">🎓 Final Year Project 2026</span>
+              <span class="fbadge">🌐 University of Agriculture Faisalabad</span>
+              <span class="fbadge">⚡ Streamlit v15.0</span>
+              <span class="fbadge">🤖 TensorFlow CNN</span>
+            </div>
+
+            <!-- BOTTOM BAR -->
+            <div class="footer-bottom">
+              <div class="footer-copy">
+                © 2026 <strong>SkinScan AI</strong> — Developed by <strong>Rehan Shafique</strong>
+                &nbsp;·&nbsp; University of Agriculture Faisalabad &nbsp;·&nbsp; Department of Bioinformatics
+              </div>
+              <div class="footer-disclaimer">
+                ⚠️ Research &amp; Educational Use Only — Not a Certified Medical Device
+              </div>
+              <div class="footer-version-badge">v15.0</div>
+            </div>
+
+          </div><!-- /footer-inner -->
+        </div><!-- /site-footer -->
+        </div><!-- /footer-outer -->
+        """, unsafe_allow_html=True)
+
 
 # ══════════════════════════════════════════════════════════════════
 #  ENTRY POINT
