@@ -1850,28 +1850,105 @@ class SkinScanApp:
     # ──────────────────────────────────────────────────────────────
     #  FOOTER
     # ──────────────────────────────────────────────────────────────
-    def _footer(self):
-        st.markdown("""
-        <div style="text-align:center;padding:2.5rem 0 1rem;
-                    border-top:1px solid rgba(37,99,235,0.12);margin-top:3rem;">
-            <div style="font-family:'Oxanium',sans-serif;font-size:1.1rem;font-weight:800;
-                        background:linear-gradient(135deg,#60a5fa,#14b8a6,#a78bfa);
-                        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-                        margin-bottom:8px;">
-                🔬  SkinScan AI — Clinical Intelligence Platform
-            </div>
-            <div style="font-size:0.78rem;color:#475569;line-height:2.0;">
-                Developed by <b style="color:#64748b;">Rehan Shafique</b>
-                &nbsp;·&nbsp; Final Year Project &nbsp;·&nbsp; Bioinformatics<br>
-                Python · Streamlit · TensorFlow · Plotly · ReportLab · PIL
-            </div>
-            <div style="font-size:0.72rem;color:#ef4444;margin-top:8px;">
-                ⚠️ Research &amp; Educational Use Only — Not a Certified Medical Device
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+    # def _footer(self):
+    #     st.markdown("""
+    #     <div style="text-align:center;padding:2.5rem 0 1rem;
+    #                 border-top:1px solid rgba(37,99,235,0.12);margin-top:3rem;">
+    #         <div style="font-family:'Oxanium',sans-serif;font-size:1.1rem;font-weight:800;
+    #                     background:linear-gradient(135deg,#60a5fa,#14b8a6,#a78bfa);
+    #                     -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    #                     margin-bottom:8px;">
+    #             🔬  SkinScan AI — Clinical Intelligence Platform
+    #         </div>
+    #         <div style="font-size:0.78rem;color:#475569;line-height:2.0;">
+    #             Developed by <b style="color:#64748b;">Rehan Shafique</b>
+    #             &nbsp;·&nbsp; Final Year Project &nbsp;·&nbsp; Bioinformatics<br>
+    #             Python · Streamlit · TensorFlow · Plotly · ReportLab · PIL
+    #         </div>
+    #         <div style="font-size:0.72rem;color:#ef4444;margin-top:8px;">
+    #             ⚠️ Research &amp; Educational Use Only — Not a Certified Medical Device
+    #         </div>
+    #     </div>
+    #     """, unsafe_allow_html=True)
 
+# ================= FOOTER =================
+def footer():
 
+    st.markdown("""
+    <style>
+
+    .footer {
+        position: relative;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background: linear-gradient(135deg,#0f172a,#1e293b);
+        color: white;
+        text-align: center;
+        padding: 30px 10px;
+        margin-top: 60px;
+        border-radius: 12px;
+        box-shadow: 0px -2px 20px rgba(0,0,0,0.3);
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .footer h3{
+        margin-bottom:10px;
+        font-weight:600;
+    }
+
+    .footer a{
+        color:#38bdf8;
+        text-decoration:none;
+        margin:0 12px;
+        font-size:16px;
+        transition:0.3s;
+    }
+
+    .footer a:hover{
+        color:#22c55e;
+        transform:scale(1.1);
+    }
+
+    .footer p{
+        margin:6px;
+        font-size:15px;
+    }
+
+    </style>
+
+    <div class="footer">
+
+        <h3>SkinScan AI — Skin Cancer Prediction System</h3>
+
+        <p><strong>Developer:</strong> Rehan Shafique</p>
+        <p>University of Agriculture Faisalabad</p>
+
+        <p>
+            📧 <a href="mailto:rehanshafiq6540@gmail.com">
+            rehanshafiq6540@gmail.com
+            </a>
+        </p>
+
+        <p>
+            💻 <a href="https://github.com/rehanshafiq70" target="_blank">
+            GitHub
+            </a>
+
+            🔗 <a href="https://www.linkedin.com/in/rehanshafiq70" target="_blank">
+            LinkedIn
+            </a>
+        </p>
+
+        <p style="margin-top:15px;">
+            © 2026 SkinScan AI | Developed by Rehan Shafique
+        </p>
+
+    </div>
+    """, unsafe_allow_html=True)
+
+# Call Footer
+footer()
 # ══════════════════════════════════════════════════════════════════
 #  ENTRY POINT
 # ══════════════════════════════════════════════════════════════════
