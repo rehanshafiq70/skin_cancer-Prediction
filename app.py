@@ -517,6 +517,7 @@ def inject_css(theme: str = "dark"):
        ENTERPRISE FOOTER  ── v15  ✅ FIXED
     ════════════════════════════════════════════════════════ */
 
+    /* Footer wrapper — breaks out of Streamlit block-container */
     .footer-outer {{
         margin-top: 4rem;
         margin-left: calc(-2rem - 1px);
@@ -535,6 +536,7 @@ def inject_css(theme: str = "dark"):
         width: 100%;
     }}
 
+    /* Decorative top gradient line */
     .site-footer::before {{
         content: '';
         position: absolute; top: 0; left: 0; right: 0; height: 2px;
@@ -543,6 +545,7 @@ def inject_css(theme: str = "dark"):
         z-index: 2;
     }}
 
+    /* Subtle grid background */
     .site-footer::after {{
         content: '';
         position: absolute; inset: 0; pointer-events: none;
@@ -559,6 +562,7 @@ def inject_css(theme: str = "dark"):
         box-sizing: border-box;
     }}
 
+    /* ── Top 4-column grid ── */
     .footer-top {{
         display: grid;
         grid-template-columns: 1.8fr 1fr 1fr 1.2fr;
@@ -568,6 +572,7 @@ def inject_css(theme: str = "dark"):
         align-items: start;
     }}
 
+    /* Brand block */
     .footer-brand-logo {{
         display: flex;
         align-items: center;
@@ -606,6 +611,7 @@ def inject_css(theme: str = "dark"):
         max-width: 300px;
     }}
 
+    /* Tech chips */
     .footer-tech-stack {{
         display: flex;
         flex-wrap: wrap;
@@ -655,17 +661,11 @@ def inject_css(theme: str = "dark"):
         transform: translateY(-5px) scale(1.12);
         box-shadow: 0 10px 24px rgba(37,99,235,0.30);
     }}
-    .social-btn.github:hover    {{ background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.30); box-shadow:0 10px 24px rgba(255,255,255,0.15); }}
-    .social-btn.linkedin:hover  {{ background:rgba(10,102,194,0.22); border-color:rgba(10,102,194,0.50); box-shadow:0 10px 24px rgba(10,102,194,0.30); }}
-    .social-btn.email:hover     {{ background:rgba(20,184,166,0.15); border-color:rgba(20,184,166,0.45); box-shadow:0 10px 24px rgba(20,184,166,0.25); }}
+    .social-btn.github:hover  {{ background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.30); box-shadow:0 10px 24px rgba(255,255,255,0.15); }}
+    .social-btn.linkedin:hover {{ background:rgba(10,102,194,0.22); border-color:rgba(10,102,194,0.50); box-shadow:0 10px 24px rgba(10,102,194,0.30); }}
+    .social-btn.email:hover    {{ background:rgba(20,184,166,0.15); border-color:rgba(20,184,166,0.45); box-shadow:0 10px 24px rgba(20,184,166,0.25); }}
 
-    /* ── ✅ INSTAGRAM HOVER STYLE (NEW) ── */
-    .social-btn.instagram:hover {{
-        background: linear-gradient(135deg, rgba(240,148,51,0.18), rgba(188,24,136,0.18));
-        border-color: rgba(220,39,67,0.55);
-        box-shadow: 0 10px 24px rgba(188,24,136,0.28);
-    }}
-
+    /* Footer nav columns */
     .footer-col-title {{
         font-size: 0.70rem;
         font-weight: 700;
@@ -703,6 +703,7 @@ def inject_css(theme: str = "dark"):
         padding-left: 6px;
     }}
 
+    /* Contact block */
     .footer-contact-item {{
         display: flex;
         align-items: flex-start;
@@ -742,6 +743,7 @@ def inject_css(theme: str = "dark"):
     }}
     .fci-value a:hover {{ color: #2dd4bf; }}
 
+    /* Email copy button */
     .email-copy-btn {{
         display: inline-flex;
         align-items: center;
@@ -760,6 +762,7 @@ def inject_css(theme: str = "dark"):
     }}
     .email-copy-btn:hover {{ background: rgba(37,99,235,0.18); color: #60a5fa; }}
 
+    /* Badges row */
     .footer-badges {{
         display: flex;
         flex-wrap: wrap;
@@ -784,6 +787,7 @@ def inject_css(theme: str = "dark"):
     }}
     .fbadge:hover {{ background: rgba(37,99,235,0.14); color: #60a5fa; }}
 
+    /* Bottom bar */
     .footer-bottom {{
         display: flex;
         align-items: center;
@@ -818,11 +822,13 @@ def inject_css(theme: str = "dark"):
         white-space: nowrap;
     }}
 
+    /* ── RESPONSIVE BREAKPOINTS ── */
     @media (max-width: 1100px) {{
         .footer-top {{
             grid-template-columns: 1.6fr 1fr 1fr;
             gap: 32px;
         }}
+        /* Contact col goes full width below the 3 columns */
         .footer-top > div:last-child {{
             grid-column: 1 / -1;
             display: grid;
@@ -1263,6 +1269,9 @@ class SkinScanApp:
             if k not in st.session_state:
                 st.session_state[k] = v
 
+    # ──────────────────────────────────────────────────────────────
+    #  TOP NAVBAR
+    # ──────────────────────────────────────────────────────────────
     def _navbar(self) -> str:
         ai_status = "AI Online" if self.ai.is_online else "Sim Mode"
         st.markdown(f"""
@@ -1309,6 +1318,9 @@ class SkinScanApp:
         st.markdown('</div>', unsafe_allow_html=True)
         return nav
 
+    # ──────────────────────────────────────────────────────────────
+    #  LAUNCH
+    # ──────────────────────────────────────────────────────────────
     def launch(self):
         nav = self._navbar()
         {
@@ -1322,6 +1334,9 @@ class SkinScanApp:
         }.get(nav, self._home)()
         self._footer()
 
+    # ══════════════════════════════════════════════════════════════
+    #  PAGE: HOME
+    # ══════════════════════════════════════════════════════════════
     def _home(self):
         st.markdown("""
         <div class="hero-section">
@@ -1405,6 +1420,9 @@ class SkinScanApp:
                 """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
+    # ══════════════════════════════════════════════════════════════
+    #  PAGE: AI SCAN
+    # ══════════════════════════════════════════════════════════════
     def _scan(self):
         st.markdown("""
         <div class="page-banner">
@@ -1689,6 +1707,9 @@ class SkinScanApp:
                 </div>
                 """, unsafe_allow_html=True)
 
+    # ══════════════════════════════════════════════════════════════
+    #  PAGE: AI ANALYSIS
+    # ══════════════════════════════════════════════════════════════
     def _analysis(self):
         st.markdown("""
         <div class="page-banner">
@@ -1784,6 +1805,9 @@ class SkinScanApp:
             """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
+    # ══════════════════════════════════════════════════════════════
+    #  PAGE: DASHBOARD
+    # ══════════════════════════════════════════════════════════════
     def _dashboard(self):
         st.markdown("""
         <div class="page-banner">
@@ -1899,6 +1923,9 @@ class SkinScanApp:
                 st.info("Need 2+ scans for trend analysis.")
             st.markdown('</div>', unsafe_allow_html=True)
 
+    # ══════════════════════════════════════════════════════════════
+    #  PAGE: HISTORY
+    # ══════════════════════════════════════════════════════════════
     def _history(self):
         st.markdown("""
         <div class="page-banner">
@@ -1963,6 +1990,9 @@ class SkinScanApp:
                 st.session_state.raw_img=None;st.session_state.proc_img=None
                 st.rerun()
 
+    # ══════════════════════════════════════════════════════════════
+    #  PAGE: MEDICAL GUIDE
+    # ══════════════════════════════════════════════════════════════
     def _medical_guide(self):
         st.markdown("""
         <div class="page-banner">
@@ -2147,6 +2177,9 @@ class SkinScanApp:
                     </div>
                     """, unsafe_allow_html=True)
 
+    # ══════════════════════════════════════════════════════════════
+    #  PAGE: ABOUT
+    # ══════════════════════════════════════════════════════════════
     def _about(self):
         st.markdown("""
         <div class="page-banner">
@@ -2219,14 +2252,16 @@ class SkinScanApp:
         st.markdown('</div>', unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════
-    #  ENTERPRISE FOOTER  ── v15  ✅ Instagram Added
+    #  ENTERPRISE FOOTER  ── v15  ✅ FIXED
     # ══════════════════════════════════════════════════════════════
     def _footer(self):
         st.markdown("""
+        <!-- Outer wrapper breaks out of Streamlit block-container -->
         <div class="footer-outer">
         <div class="site-footer">
           <div class="footer-inner">
 
+            <!-- TOP SECTION: 4-column grid -->
             <div class="footer-top">
 
               <!-- Col 1: Brand -->
@@ -2253,50 +2288,23 @@ class SkinScanApp:
                   <span class="ftech-chip">NumPy</span>
                   <span class="ftech-chip">Pandas</span>
                 </div>
-
-                <!-- ✅ SOCIAL BUTTONS — GitHub + LinkedIn + Email + Instagram -->
                 <div class="footer-social">
-
-                  <!-- GitHub -->
                   <a href="https://github.com/rehanshafiq70" target="_blank" class="social-btn github" title="GitHub">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" style="color:#c9d1d9;">
                       <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
                     </svg>
                   </a>
-
-                  <!-- LinkedIn -->
                   <a href="https://www.linkedin.com/in/rehanshafiq70" target="_blank" class="social-btn linkedin" title="LinkedIn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#0a66c2;">
                       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                     </svg>
                   </a>
-
-                  <!-- Email -->
                   <a href="mailto:rehanshafiq6540@gmail.com" class="social-btn email" title="Email">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                       <polyline points="22,6 12,13 2,6"/>
                     </svg>
                   </a>
-
-                  <!-- ✅ Instagram (NEW) -->
-                  <a href="https://www.instagram.com/rehanshafiq70?igsh=dXFoNWZtZjhqNXJy" target="_blank" class="social-btn instagram" title="Instagram">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <defs>
-                        <linearGradient id="igGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-                          <stop offset="0%"   stop-color="#f09433"/>
-                          <stop offset="25%"  stop-color="#e6683c"/>
-                          <stop offset="50%"  stop-color="#dc2743"/>
-                          <stop offset="75%"  stop-color="#cc2366"/>
-                          <stop offset="100%" stop-color="#bc1888"/>
-                        </linearGradient>
-                      </defs>
-                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="url(#igGrad)"/>
-                      <circle cx="12" cy="12" r="4" stroke="url(#igGrad)"/>
-                      <circle cx="17.5" cy="6.5" r="1.2" fill="url(#igGrad)" stroke="none"/>
-                    </svg>
-                  </a>
-
                 </div>
               </div>
 
@@ -2377,18 +2385,6 @@ class SkinScanApp:
                     </div>
                   </div>
                 </div>
-
-                <!-- ✅ Instagram Contact Item (NEW) -->
-                <div class="footer-contact-item">
-                  <div class="fci-icon">📸</div>
-                  <div>
-                    <div class="fci-label">Instagram</div>
-                    <div class="fci-value">
-                      <a href="https://www.instagram.com/rehanshafiq70?igsh=dXFoNWZtZjhqNXJy" target="_blank">@rehanshafiq70</a>
-                    </div>
-                  </div>
-                </div>
-
               </div>
 
             </div><!-- /footer-top -->
