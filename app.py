@@ -2095,6 +2095,6 @@ class SkinScanApp:
 # ══════════════════════════════════════════════════════════════════
 #  ENTRY POINT
 # ══════════════════════════════════════════════════════════════════
-# if __name__ == "__main__":
-#     app = SkinScanApp()
-#     app.launch()
+if __name__ == "__main__":
+    app = SkinScanApp()
+    app.launch()
