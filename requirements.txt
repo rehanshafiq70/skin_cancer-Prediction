@@ -1,8 +1,11 @@
-streamlit
-tensorflow
-numpy
-pandas
-pillow
-plotly
-opencv-python-headless
-gdown
+# SkinScan AI — Clinical Intelligence Platform v12.0
+# Requirements File — Rehan Shafique
+
+streamlit>=1.32.0
+tensorflow>=2.13.0
+Pillow>=10.0.0
+numpy>=1.24.0
+pandas>=2.0.0
+plotly>=5.18.0
+streamlit-option-menu>=0.3.6
+reportlab>=4.0.0
