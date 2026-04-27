@@ -1866,7 +1866,7 @@ class SkinScanApp:
                 Python · Streamlit · TensorFlow · Plotly · ReportLab · PIL
             </div>
             <div style="font-size:0.72rem;color:#ef4444;margin-top:8px;">
-    #             ⚠️ Research &amp; Educational Use Only — Not a Certified Medical Device
+                ⚠️ Research &amp; Educational Use Only — Not a Certified Medical Device
           </div>
         </div>
          """, unsafe_allow_html=True)
