@@ -1,11 +1,29 @@
-# SkinScan AI — Clinical Intelligence Platform v12.0
-# Requirements File — Rehan Shafique
+# ─────────────────────────────────────────────
+#  SkinScan AI — Requirements
+#  Developer : Rehan Shafique · UAF
+#  Version   : v15.0
+# ─────────────────────────────────────────────
 
-streamlit>=1.32.0
-tensorflow>=2.13.0
-Pillow>=10.0.0
+# Core Framework
+streamlit>=1.35.0
+
+# Data & Numerics
 numpy>=1.24.0
 pandas>=2.0.0
+
+# Image Processing
+Pillow>=10.0.0
+scipy>=1.11.0
+
+# Visualization
 plotly>=5.18.0
+
+# Streamlit UI Components
 streamlit-option-menu>=0.3.6
+
+# PDF Report Generation (optional but recommended)
 reportlab>=4.0.0
+
+# Deep Learning — CNN Model Inference
+# (comment out if not using the .h5 model)
+tensorflow>=2.13.0
