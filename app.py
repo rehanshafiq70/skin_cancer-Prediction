@@ -1850,27 +1850,155 @@ class SkinScanApp:
     # ──────────────────────────────────────────────────────────────
     #  FOOTER
     # ──────────────────────────────────────────────────────────────
-    def _footer(self):
-        st.markdown("""
-        <div style="text-align:center;padding:2.5rem 0 1rem;
-                    border-top:1px solid rgba(37,99,235,0.12);margin-top:3rem;">
-            <div style="font-family:'Oxanium',sans-serif;font-size:1.1rem;font-weight:800;
-                        background:linear-gradient(135deg,#60a5fa,#14b8a6,#a78bfa);
-                        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-                        margin-bottom:8px;">
-                🔬  SkinScan AI — Clinical Intelligence Platform
-            </div>
-            <div style="font-size:0.78rem;color:#475569;line-height:2.0;">
-                Developed by <b style="color:#64748b;">Rehan Shafique</b>
-                &nbsp;·&nbsp; Final Year Project &nbsp;·&nbsp; Bioinformatics<br>
-                Python · Streamlit · TensorFlow · Plotly · ReportLab · PIL
-            </div>
-            <div style="font-size:0.72rem;color:#ef4444;margin-top:8px;">
-                ⚠️ Research &amp; Educational Use Only — Not a Certified Medical Device
-          </div>
-        </div>
-         """, unsafe_allow_html=True)
+    # def _footer(self):
+    #     st.markdown("""
+    #     <div style="text-align:center;padding:2.5rem 0 1rem;
+    #                 border-top:1px solid rgba(37,99,235,0.12);margin-top:3rem;">
+    #         <div style="font-family:'Oxanium',sans-serif;font-size:1.1rem;font-weight:800;
+    #                     background:linear-gradient(135deg,#60a5fa,#14b8a6,#a78bfa);
+    #                     -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    #                     margin-bottom:8px;">
+    #             🔬  SkinScan AI — Clinical Intelligence Platform
+    #         </div>
+    #         <div style="font-size:0.78rem;color:#475569;line-height:2.0;">
+    #             Developed by <b style="color:#64748b;">Rehan Shafique</b>
+    #             &nbsp;·&nbsp; Final Year Project &nbsp;·&nbsp; Bioinformatics<br>
+    #             Python · Streamlit · TensorFlow · Plotly · ReportLab · PIL
+    #         </div>
+    #         <div style="font-size:0.72rem;color:#ef4444;margin-top:8px;">
+    #             ⚠️ Research &amp; Educational Use Only — Not a Certified Medical Device
+    #       </div>
+    #     </div>
+    #      """, unsafe_allow_html=True)
+   # Replace the _footer method in the SkinScanApp class with this updated version:
 
+def _footer(self):
+    st.markdown("""
+    <footer style="
+        background: linear-gradient(135deg, rgba(2,13,30,0.95) 0%, rgba(4,22,50,0.92) 100%);
+        border-top: 1px solid rgba(37,99,235,0.22);
+        padding: 2.5rem 2rem 1.5rem;
+        margin-top: 4rem;
+        border-radius: 20px 20px 0 0;
+        backdrop-filter: blur(16px);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    ">
+        <!-- Decorative gradient line -->
+        <div style="
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                #2563eb 25%, 
+                #14b8a6 50%, 
+                #8b5cf6 75%, 
+                transparent 100%);
+        "></div>
+        
+        <!-- Main logo/title -->
+        <div style="
+            font-family: 'Oxanium', sans-serif;
+            font-size: clamp(1.3rem, 2.8vw, 1.8rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, #60a5fa 0%, #14b8a6 40%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.3px;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        ">
+            🔬 SkinScan AI
+        </div>
+        
+        <!-- Subtitle -->
+        <div style="
+            font-size: 0.88rem;
+            color: #6b9ab8;
+            font-weight: 500;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        ">
+            Clinical Intelligence Platform · v14.0
+        </div>
+        
+        <!-- Developer info -->
+        <div style="
+            font-size: 0.82rem;
+            color: #a8c4d8;
+            line-height: 1.7;
+            margin-bottom: 14px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        ">
+            Developed by <span style="color: #60a5fa; font-weight: 700;">Rehan Shafique</span><br>
+            Final Year Project · Department of Bioinformatics
+        </div>
+        
+        <!-- Tech stack -->
+        <div style="
+            font-size: 0.76rem;
+            color: #475569;
+            background: rgba(37,99,235,0.08);
+            border: 1px solid rgba(37,99,235,0.15);
+            border-radius: 12px;
+            padding: 10px 20px;
+            margin-bottom: 18px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        ">
+            🐍 Python · Streamlit · TensorFlow · Plotly · ReportLab · PIL
+        </div>
+        
+        <!-- Disclaimer -->
+        <div style="
+            font-size: 0.74rem;
+            color: #f87171;
+            font-weight: 600;
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.20);
+            border-radius: 10px;
+            padding: 12px 18px;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        ">
+            ⚠️ Research & Educational Use Only — Not a Certified Medical Device
+        </div>
+        
+        <!-- Copyright & timestamp -->
+        <div style="
+            font-size: 0.70rem;
+            color: #475569;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 500;
+        ">
+            © 2024 SkinScan AI · {datetime.datetime.now().strftime('%Y')}
+        </div>
+        
+        <!-- Decorative elements -->
+        <div style="
+            position: absolute;
+            top: 20px; right: 20px;
+            font-size: 3.5rem;
+            opacity: 0.04;
+            pointer-events: none;
+        ">
+            🧬
+        </div>
+        <div style="
+            position: absolute;
+            bottom: 10px; left: 50%;
+            transform: translateX(-50%);
+            width: 80px; height: 2px;
+            background: linear-gradient(90deg, transparent, #2563eb, transparent);
+            border-radius: 1px;
+        "></div>
+    </footer>
+    """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════
 #  ENTRY POINT
