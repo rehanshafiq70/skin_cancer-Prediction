@@ -1332,7 +1332,7 @@ class SkinScanApp:
             "Medical Guide": self._medical_guide,
             "About":         self._about,
         }.get(nav, self._home)()
-        self._footer()
+        
 
     # ══════════════════════════════════════════════════════════════
     #  PAGE: HOME
@@ -2713,4 +2713,4 @@ if __name__ == "__main__":
 # ══════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
     app = SkinScanApp()
-    app.launch()
+   # app.launch()
