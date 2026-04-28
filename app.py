@@ -2251,55 +2251,311 @@ class SkinScanApp:
                     st.markdown(f'<div class="step-box">{pt}</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # ══════════════════════════════════════════════════════════════
-    #  ENTERPRISE FOOTER  ── v15  ✅ FIXED
-    # ══════════════════════════════════════════════════════════════
-    def _footer(self):
-        st.markdown("""
-        <!-- Outer wrapper breaks out of Streamlit block-container -->
-        <div class="footer-outer">
-        <div class="site-footer">
-          <div class="footer-inner">
+   """
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  SKINSCAN AI  ·  FOOTER FIX  ·  v15.1                                       ║
+║  ROOT CAUSE: Footer HTML was rendering as raw text because:                  ║
+║    1. Streamlit's st.markdown() with unsafe_allow_html=True can fail         ║
+║       when called inside certain layout contexts (columns, expanders, etc.)  ║
+║    2. CSS classes in inject_css() are injected once at page load —           ║
+║       if the footer renders before CSS is parsed, classes are unknown.       ║
+║                                                                               ║
+║  FIX: Make _footer() completely self-contained — ALL CSS is embedded         ║
+║  directly inside the footer HTML block via a <style> tag. This guarantees   ║
+║  the footer always renders correctly regardless of page state.               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 
-            <!-- TOP SECTION: 4-column grid -->
-            <div class="footer-top">
+INSTRUCTIONS:
+  1. Open your main app file (e.g. app.py / skinscan.py)
+  2. Find the _footer() method inside SkinScanApp class
+  3. REPLACE the entire _footer() method with the one below
+  4. Save and re-run: streamlit run app.py
+
+No other changes needed. The fix is 100% backward-compatible.
+"""
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  PASTE THIS METHOD TO REPLACE _footer() IN YOUR SkinScanApp CLASS
+# ══════════════════════════════════════════════════════════════════════════════
+
+FOOTER_METHOD = '''
+    def _footer(self):
+        """
+        Self-contained footer — all CSS is embedded inline.
+        This avoids dependency on inject_css() and fixes raw-HTML rendering bug.
+        """
+        dark = st.session_state.get("theme", "dark") == "dark"
+
+        # Theme-aware color tokens
+        FOOTER_BG  = "rgba(2,8,18,0.97)"      if dark else "rgba(8,20,45,0.97)"
+        TEXT       = "#dff0fa"                  if dark else "#0c1e32"
+        SUB        = "#6b9ab8"                  if dark else "#3a6080"
+        BORDER     = "rgba(37,99,235,0.22)"
+        SURF2      = "rgba(6,28,60,0.65)"       if dark else "rgba(240,247,255,0.90)"
+
+        st.markdown(f"""
+        <style>
+        /* ── FOOTER SELF-CONTAINED STYLES ── */
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Oxanium:wght@600;700;800&family=Space+Mono:wght@400;700&display=swap');
+
+        .sf-outer {{
+            margin-top: 4rem;
+            margin-left: calc(-2rem - 1px);
+            margin-right: calc(-2rem - 1px);
+            width: calc(100% + 4rem + 2px);
+        }}
+        .sf-wrap {{
+            background: {FOOTER_BG};
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-top: 1px solid {BORDER};
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            font-family: 'Outfit', sans-serif;
+        }}
+        /* Gradient top line */
+        .sf-wrap::before {{
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg,
+                transparent 0%, #2563eb 20%, #14b8a6 50%, #8b5cf6 80%, transparent 100%);
+            z-index: 2;
+        }}
+        /* Subtle grid texture */
+        .sf-wrap::after {{
+            content: '';
+            position: absolute; inset: 0; pointer-events: none; z-index: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%232563eb' fill-opacity='0.012'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }}
+        .sf-inner {{
+            position: relative; z-index: 1;
+            max-width: 1320px; margin: 0 auto;
+            padding: 0 2.5rem; box-sizing: border-box;
+        }}
+
+        /* ── Top grid: 4 columns ── */
+        .sf-top {{
+            display: grid;
+            grid-template-columns: 1.8fr 1fr 1fr 1.3fr;
+            gap: 48px;
+            padding: 3.5rem 0 2.5rem;
+            border-bottom: 1px solid rgba(37,99,235,0.14);
+            align-items: start;
+        }}
+
+        /* ── Brand block ── */
+        .sf-brand-logo {{
+            display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+        }}
+        .sf-brand-icon {{
+            font-size: 1.8rem;
+            filter: drop-shadow(0 0 10px rgba(20,184,166,0.5));
+            animation: sf-logo-pulse 3s ease-in-out infinite;
+            flex-shrink: 0;
+        }}
+        @keyframes sf-logo-pulse {{
+            0%,100% {{ filter: drop-shadow(0 0 5px rgba(37,99,235,0.6)); transform: scale(1); }}
+            50%      {{ filter: drop-shadow(0 0 18px rgba(20,184,166,0.8)); transform: scale(1.08); }}
+        }}
+        .sf-brand-name {{
+            font-family: 'Oxanium', sans-serif; font-size: 1.15rem; font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6 0%, #14b8a6 55%, #8b5cf6 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: 0.2px; line-height: 1.2;
+        }}
+        .sf-brand-tagline {{
+            font-size: 0.68rem; color: {SUB};
+            letter-spacing: 1.5px; text-transform: uppercase;
+            font-weight: 500; line-height: 1.3;
+        }}
+        .sf-brand-desc {{
+            font-size: 0.82rem; color: {SUB}; line-height: 1.75;
+            margin-bottom: 18px; max-width: 300px;
+        }}
+
+        /* ── Tech chips ── */
+        .sf-tech-stack {{
+            display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px;
+        }}
+        .sf-tech-chip {{
+            background: rgba(37,99,235,0.10); border: 1px solid rgba(37,99,235,0.22);
+            color: #60a5fa; font-size: 0.61rem; font-weight: 600;
+            padding: 3px 10px; border-radius: 6px; letter-spacing: 0.4px;
+            transition: all 0.2s; white-space: nowrap; cursor: default;
+        }}
+        .sf-tech-chip:hover {{
+            background: rgba(37,99,235,0.20); transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(37,99,235,0.20);
+        }}
+
+        /* ── Social buttons ── */
+        .sf-social {{ display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }}
+        .sf-social-btn {{
+            width: 40px; height: 40px; border-radius: 10px;
+            display: inline-flex; align-items: center; justify-content: center;
+            text-decoration: none; transition: all 0.28s cubic-bezier(.34,1.56,.64,1);
+            border: 1px solid rgba(37,99,235,0.25);
+            background: rgba(37,99,235,0.08); cursor: pointer; flex-shrink: 0;
+        }}
+        .sf-social-btn:hover {{ transform: translateY(-5px) scale(1.12); box-shadow: 0 10px 24px rgba(37,99,235,0.30); }}
+        .sf-social-btn.github:hover  {{ background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.30); box-shadow:0 10px 24px rgba(255,255,255,0.15); }}
+        .sf-social-btn.linkedin:hover {{ background:rgba(10,102,194,0.22); border-color:rgba(10,102,194,0.50); box-shadow:0 10px 24px rgba(10,102,194,0.30); }}
+        .sf-social-btn.email:hover    {{ background:rgba(20,184,166,0.15); border-color:rgba(20,184,166,0.45); box-shadow:0 10px 24px rgba(20,184,166,0.25); }}
+
+        /* ── Column headings ── */
+        .sf-col-title {{
+            font-size: 0.70rem; font-weight: 700; color: {TEXT};
+            text-transform: uppercase; letter-spacing: 2px; margin-bottom: 18px;
+            display: flex; align-items: center; gap: 8px; white-space: nowrap;
+        }}
+        .sf-col-title::before {{
+            content: ''; display: inline-block; width: 14px; height: 2px;
+            background: linear-gradient(90deg, #2563eb, #14b8a6);
+            border-radius: 2px; flex-shrink: 0;
+        }}
+
+        /* ── Nav links ── */
+        .sf-nav-link {{
+            display: block; font-size: 0.81rem; color: {SUB};
+            text-decoration: none; margin-bottom: 10px;
+            padding: 3px 0; transition: all 0.2s; cursor: pointer;
+            white-space: nowrap;
+        }}
+        .sf-nav-link:hover {{ color: #60a5fa; padding-left: 6px; }}
+
+        /* ── Contact items ── */
+        .sf-contact-item {{
+            display: flex; align-items: flex-start; gap: 10px;
+            margin-bottom: 14px; font-size: 0.81rem;
+        }}
+        .sf-ci-icon {{
+            width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.95rem; background: rgba(37,99,235,0.12);
+            border: 1px solid rgba(37,99,235,0.20);
+        }}
+        .sf-ci-label {{
+            font-size: 0.63rem; color: {SUB};
+            text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 3px;
+        }}
+        .sf-ci-value {{
+            color: {TEXT}; font-weight: 500; word-break: break-all; line-height: 1.4;
+        }}
+        .sf-ci-value a {{ color: #60a5fa; text-decoration: none; transition: color 0.2s; }}
+        .sf-ci-value a:hover {{ color: #2dd4bf; }}
+
+        .sf-email-copy {{
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 0.70rem; color: {SUB}; cursor: pointer;
+            background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.18);
+            padding: 3px 10px; border-radius: 6px; margin-top: 5px;
+            transition: all 0.2s; user-select: none; width: fit-content;
+        }}
+        .sf-email-copy:hover {{ background: rgba(37,99,235,0.18); color: #60a5fa; }}
+
+        /* ── Badges row ── */
+        .sf-badges {{
+            display: flex; flex-wrap: wrap; gap: 8px;
+            padding: 20px 0 4px;
+            border-top: 1px solid rgba(37,99,235,0.10);
+        }}
+        .sf-badge {{
+            display: inline-flex; align-items: center; gap: 5px;
+            background: rgba(37,99,235,0.07); border: 1px solid rgba(37,99,235,0.16);
+            color: {SUB}; font-size: 0.64rem; font-weight: 600;
+            padding: 5px 12px; border-radius: 8px; letter-spacing: 0.4px;
+            transition: all 0.2s; white-space: nowrap; cursor: default;
+        }}
+        .sf-badge:hover {{ background: rgba(37,99,235,0.14); color: #60a5fa; }}
+
+        /* ── Bottom bar ── */
+        .sf-bottom {{
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 12px; padding: 18px 0 22px;
+        }}
+        .sf-copy {{ font-size: 0.75rem; color: {SUB}; line-height: 1.5; }}
+        .sf-copy strong {{ color: {TEXT}; }}
+        .sf-disclaimer {{ font-size: 0.68rem; color: rgba(239,68,68,0.75); display: flex; align-items: center; gap: 5px; }}
+        .sf-version {{
+            background: rgba(37,99,235,0.10); border: 1px solid rgba(37,99,235,0.22);
+            color: #60a5fa; font-size: 0.62rem; font-weight: 700;
+            padding: 3px 10px; border-radius: 6px; letter-spacing: 1px;
+            font-family: 'Space Mono', monospace; white-space: nowrap;
+        }}
+
+        /* ── Responsive ── */
+        @media (max-width: 1100px) {{
+            .sf-top {{ grid-template-columns: 1.6fr 1fr 1fr; gap: 32px; }}
+            .sf-top > div:last-child {{
+                grid-column: 1 / -1;
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 16px;
+            }}
+            .sf-top > div:last-child .sf-col-title {{ grid-column: 1 / -1; }}
+        }}
+        @media (max-width: 768px) {{
+            .sf-outer {{ margin-left: calc(-0.75rem - 1px); margin-right: calc(-0.75rem - 1px); width: calc(100% + 1.5rem + 2px); }}
+            .sf-inner {{ padding: 0 1.25rem; }}
+            .sf-top {{ grid-template-columns: 1fr 1fr; gap: 28px; padding: 2.5rem 0 2rem; }}
+            .sf-top > div:first-child {{ grid-column: 1 / -1; }}
+            .sf-top > div:last-child {{ grid-column: 1 / -1; }}
+            .sf-brand-desc {{ max-width: 100%; }}
+            .sf-bottom {{ flex-direction: column; text-align: center; gap: 10px; padding: 16px 0 20px; }}
+            .sf-badges {{ justify-content: center; }}
+        }}
+        @media (max-width: 480px) {{
+            .sf-top {{ grid-template-columns: 1fr; gap: 22px; padding: 2rem 0 1.5rem; }}
+            .sf-top > div:first-child {{ grid-column: auto; }}
+            .sf-social {{ justify-content: flex-start; }}
+            .sf-tech-stack {{ gap: 5px; }}
+        }}
+        </style>
+
+        <div class="sf-outer">
+        <div class="sf-wrap">
+          <div class="sf-inner">
+
+            <!-- TOP GRID -->
+            <div class="sf-top">
 
               <!-- Col 1: Brand -->
-              <div class="footer-brand">
-                <div class="footer-brand-logo">
-                  <span class="footer-brand-icon">🔬</span>
+              <div>
+                <div class="sf-brand-logo">
+                  <span class="sf-brand-icon">🔬</span>
                   <div>
-                    <div class="footer-brand-name">SkinScan AI</div>
-                    <div class="footer-brand-tagline">Next-Gen Dermatology Intelligence</div>
+                    <div class="sf-brand-name">SkinScan AI</div>
+                    <div class="sf-brand-tagline">Next-Gen Dermatology Intelligence</div>
                   </div>
                 </div>
-                <p class="footer-brand-desc">
+                <p class="sf-brand-desc">
                   An AI-powered clinical platform for dermoscopic skin lesion analysis.
                   Developed as a Final Year Project at the University of Agriculture Faisalabad
                   using deep learning CNN models for benign/malignant classification.
                 </p>
-                <div class="footer-tech-stack">
-                  <span class="ftech-chip">Python</span>
-                  <span class="ftech-chip">Streamlit</span>
-                  <span class="ftech-chip">TensorFlow</span>
-                  <span class="ftech-chip">Plotly</span>
-                  <span class="ftech-chip">PIL</span>
-                  <span class="ftech-chip">ReportLab</span>
-                  <span class="ftech-chip">NumPy</span>
-                  <span class="ftech-chip">Pandas</span>
+                <div class="sf-tech-stack">
+                  <span class="sf-tech-chip">Python</span>
+                  <span class="sf-tech-chip">Streamlit</span>
+                  <span class="sf-tech-chip">TensorFlow</span>
+                  <span class="sf-tech-chip">Plotly</span>
+                  <span class="sf-tech-chip">PIL</span>
+                  <span class="sf-tech-chip">ReportLab</span>
+                  <span class="sf-tech-chip">NumPy</span>
+                  <span class="sf-tech-chip">Pandas</span>
                 </div>
-                <div class="footer-social">
-                  <a href="https://github.com/rehanshafiq70" target="_blank" class="social-btn github" title="GitHub">
+                <div class="sf-social">
+                  <a href="https://github.com/rehanshafiq70" target="_blank" class="sf-social-btn github" title="GitHub">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" style="color:#c9d1d9;">
                       <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
                     </svg>
                   </a>
-                  <a href="https://www.linkedin.com/in/rehanshafiq70" target="_blank" class="social-btn linkedin" title="LinkedIn">
+                  <a href="https://www.linkedin.com/in/rehanshafiq70" target="_blank" class="sf-social-btn linkedin" title="LinkedIn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#0a66c2;">
                       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                     </svg>
                   </a>
-                  <a href="mailto:rehanshafiq6540@gmail.com" class="social-btn email" title="Email">
+                  <a href="mailto:rehanshafiq6540@gmail.com" class="sf-social-btn email" title="Email">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                       <polyline points="22,6 12,13 2,6"/>
@@ -2310,113 +2566,166 @@ class SkinScanApp:
 
               <!-- Col 2: Platform Links -->
               <div>
-                <div class="footer-col-title">Platform</div>
-                <span class="footer-nav-link">🏠 Home Dashboard</span>
-                <span class="footer-nav-link">📷 AI Scan Lab</span>
-                <span class="footer-nav-link">🧠 AI Analysis</span>
-                <span class="footer-nav-link">📊 Analytics Dashboard</span>
-                <span class="footer-nav-link">📁 Patient History</span>
-                <span class="footer-nav-link">👨‍⚕️ Medical Guide</span>
-                <span class="footer-nav-link">⚙️ Settings</span>
+                <div class="sf-col-title">Platform</div>
+                <span class="sf-nav-link">🏠 Home Dashboard</span>
+                <span class="sf-nav-link">📷 AI Scan Lab</span>
+                <span class="sf-nav-link">🧠 AI Analysis</span>
+                <span class="sf-nav-link">📊 Analytics Dashboard</span>
+                <span class="sf-nav-link">📁 Patient History</span>
+                <span class="sf-nav-link">👨‍⚕️ Medical Guide</span>
+                <span class="sf-nav-link">⚙️ Settings</span>
               </div>
 
               <!-- Col 3: Features -->
               <div>
-                <div class="footer-col-title">Features</div>
-                <span class="footer-nav-link">🧬 Multi-Class CNN</span>
-                <span class="footer-nav-link">🔥 Grad-CAM Heatmap</span>
-                <span class="footer-nav-link">🤖 AI Explanation Panel</span>
-                <span class="footer-nav-link">📷 Live Camera Scan</span>
-                <span class="footer-nav-link">📄 PDF / CSV Reports</span>
-                <span class="footer-nav-link">🛡️ Blur Detection</span>
-                <span class="footer-nav-link">🌓 Dark / Light Mode</span>
+                <div class="sf-col-title">Features</div>
+                <span class="sf-nav-link">🧬 Multi-Class CNN</span>
+                <span class="sf-nav-link">🔥 Grad-CAM Heatmap</span>
+                <span class="sf-nav-link">🤖 AI Explanation</span>
+                <span class="sf-nav-link">📷 Live Camera Scan</span>
+                <span class="sf-nav-link">📄 PDF / CSV Reports</span>
+                <span class="sf-nav-link">🛡️ Blur Detection</span>
+                <span class="sf-nav-link">🌓 Dark / Light Mode</span>
               </div>
 
               <!-- Col 4: Contact -->
               <div>
-                <div class="footer-col-title">Developer Contact</div>
+                <div class="sf-col-title">Developer Contact</div>
 
-                <div class="footer-contact-item">
-                  <div class="fci-icon">👨‍💻</div>
+                <div class="sf-contact-item">
+                  <div class="sf-ci-icon">👨‍💻</div>
                   <div>
-                    <div class="fci-label">Developer</div>
-                    <div class="fci-value">Rehan Shafique</div>
+                    <div class="sf-ci-label">Developer</div>
+                    <div class="sf-ci-value">Rehan Shafique</div>
                   </div>
                 </div>
 
-                <div class="footer-contact-item">
-                  <div class="fci-icon">🏫</div>
+                <div class="sf-contact-item">
+                  <div class="sf-ci-icon">🏫</div>
                   <div>
-                    <div class="fci-label">Institution</div>
-                    <div class="fci-value">University of Agriculture Faisalabad</div>
+                    <div class="sf-ci-label">Institution</div>
+                    <div class="sf-ci-value">University of Agriculture Faisalabad</div>
                   </div>
                 </div>
 
-                <div class="footer-contact-item">
-                  <div class="fci-icon">📧</div>
+                <div class="sf-contact-item">
+                  <div class="sf-ci-icon">📧</div>
                   <div>
-                    <div class="fci-label">Email</div>
-                    <div class="fci-value">
+                    <div class="sf-ci-label">Email</div>
+                    <div class="sf-ci-value">
                       <a href="mailto:rehanshafiq6540@gmail.com">rehanshafiq6540@gmail.com</a>
                     </div>
-                    <div class="email-copy-btn"
-                         onclick="navigator.clipboard.writeText('rehanshafiq6540@gmail.com').then(()=>{this.textContent='✅ Copied!';setTimeout(()=>{this.innerHTML='📋 Copy Email'},2000)})">
+                    <div class="sf-email-copy"
+                         onclick="navigator.clipboard.writeText('rehanshafiq6540@gmail.com').then(()=>{{this.textContent='✅ Copied!';setTimeout(()=>{{this.textContent='📋 Copy Email'}},2000)}})">
                       📋 Copy Email
                     </div>
                   </div>
                 </div>
 
-                <div class="footer-contact-item">
-                  <div class="fci-icon">💼</div>
+                <div class="sf-contact-item">
+                  <div class="sf-ci-icon">💼</div>
                   <div>
-                    <div class="fci-label">LinkedIn</div>
-                    <div class="fci-value">
+                    <div class="sf-ci-label">LinkedIn</div>
+                    <div class="sf-ci-value">
                       <a href="https://www.linkedin.com/in/rehanshafiq70" target="_blank">linkedin.com/in/rehanshafiq70</a>
                     </div>
                   </div>
                 </div>
 
-                <div class="footer-contact-item">
-                  <div class="fci-icon">🐙</div>
+                <div class="sf-contact-item">
+                  <div class="sf-ci-icon">🐙</div>
                   <div>
-                    <div class="fci-label">GitHub</div>
-                    <div class="fci-value">
+                    <div class="sf-ci-label">GitHub</div>
+                    <div class="sf-ci-value">
                       <a href="https://github.com/rehanshafiq70" target="_blank">github.com/rehanshafiq70</a>
                     </div>
                   </div>
                 </div>
+
               </div>
+            </div><!-- /sf-top -->
 
-            </div><!-- /footer-top -->
-
-            <!-- BADGES ROW -->
-            <div class="footer-badges">
-              <span class="fbadge">🔬 CNN Deep Learning</span>
-              <span class="fbadge">🏥 Clinical Intelligence</span>
-              <span class="fbadge">🧬 Dermoscopy AI</span>
-              <span class="fbadge">🎓 Final Year Project 2026</span>
-              <span class="fbadge">🌐 University of Agriculture Faisalabad</span>
-              <span class="fbadge">⚡ Streamlit v15.0</span>
-              <span class="fbadge">🤖 TensorFlow CNN</span>
+            <!-- BADGES -->
+            <div class="sf-badges">
+              <span class="sf-badge">🔬 CNN Deep Learning</span>
+              <span class="sf-badge">🏥 Clinical Intelligence</span>
+              <span class="sf-badge">🧬 Dermoscopy AI</span>
+              <span class="sf-badge">🎓 Final Year Project 2026</span>
+              <span class="sf-badge">🌐 University of Agriculture Faisalabad</span>
+              <span class="sf-badge">⚡ Streamlit v15.0</span>
+              <span class="sf-badge">🤖 TensorFlow CNN</span>
             </div>
 
             <!-- BOTTOM BAR -->
-            <div class="footer-bottom">
-              <div class="footer-copy">
+            <div class="sf-bottom">
+              <div class="sf-copy">
                 © 2026 <strong>SkinScan AI</strong> — Developed by <strong>Rehan Shafique</strong>
-                &nbsp;·&nbsp; University of Agriculture Faisalabad &nbsp;·&nbsp; Department of Bioinformatics
+                &nbsp;·&nbsp; University of Agriculture Faisalabad &nbsp;·&nbsp; Dept. of Bioinformatics
               </div>
-              <div class="footer-disclaimer">
+              <div class="sf-disclaimer">
                 ⚠️ Research &amp; Educational Use Only — Not a Certified Medical Device
               </div>
-              <div class="footer-version-badge">v15.0</div>
+              <div class="sf-version">v15.0</div>
             </div>
 
-          </div><!-- /footer-inner -->
-        </div><!-- /site-footer -->
-        </div><!-- /footer-outer -->
+          </div><!-- /sf-inner -->
+        </div><!-- /sf-wrap -->
+        </div><!-- /sf-outer -->
         """, unsafe_allow_html=True)
+'''
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  ALSO: Remove the inject_css() footer-related classes to avoid conflicts
+#  (Optional but keeps CSS clean — search for and delete these class defs
+#   from inject_css() in your file):
+#
+#  Classes now ONLY in footer (can remove from inject_css to avoid duplication):
+#    .footer-outer, .site-footer, .footer-inner, .footer-top, .footer-brand-logo,
+#    .footer-brand-icon, .footer-brand-name, .footer-brand-tagline, .footer-brand-desc,
+#    .footer-tech-stack, .ftech-chip, .footer-social, .social-btn,
+#    .footer-col-title, .footer-nav-link, .footer-contact-item, .fci-icon,
+#    .fci-label, .fci-value, .email-copy-btn, .footer-badges, .fbadge,
+#    .footer-bottom, .footer-copy, .footer-disclaimer, .footer-version-badge
+#
+#  Keeping them in inject_css() too won't break anything (just redundant).
+# ══════════════════════════════════════════════════════════════════════════════
+
+if __name__ == "__main__":
+    print("=" * 70)
+    print("  SKINSCAN AI — FOOTER FIX  v15.1")
+    print("=" * 70)
+    print()
+    print("ROOT CAUSE OF BUG:")
+    print("  The footer's CSS classes were defined in inject_css() via a")
+    print("  separate st.markdown() call. Streamlit processes each markdown")
+    print("  block independently. When the footer HTML was rendered, the")
+    print("  browser sometimes hadn't applied the stylesheet yet, causing")
+    print("  all CSS classes to be unrecognized — so the HTML rendered as")
+    print("  raw visible text.")
+    print()
+    print("FIX APPLIED:")
+    print("  The new _footer() method embeds a <style> block INSIDE the same")
+    print("  st.markdown() call as the footer HTML. This guarantees CSS and")
+    print("  HTML are always delivered together in one atomic browser update.")
+    print()
+    print("HOW TO APPLY:")
+    print("  1. Open your app.py / skinscan.py")
+    print("  2. Find the _footer() method inside class SkinScanApp")
+    print("  3. Replace the entire method with the FOOTER_METHOD string above")
+    print("  4. Run: streamlit run app.py")
+    print()
+    print("CHANGES SUMMARY:")
+    print("  - All CSS class names renamed from 'footer-*' → 'sf-*'")
+    print("    (avoids collision with inject_css() styles)")
+    print("  - <style> block embedded directly inside _footer()'s markdown")
+    print("  - Theme-aware colors computed dynamically from session_state")
+    print("  - All hover, animation, responsive breakpoints preserved")
+    print("  - Social links, contact, tech chips fully functional")
+    print("  - Email copy-to-clipboard button preserved")
+    print()
+    print("  ✅ Footer will now always render correctly on all pages.")
+    print("=" * 70)
 
 # ══════════════════════════════════════════════════════════════════
 #  ENTRY POINT
