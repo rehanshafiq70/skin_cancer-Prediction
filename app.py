@@ -16,6 +16,13 @@ import plotly.express as px
 from streamlit_option_menu import option_menu
 import random, time, datetime, io, json, base64
 
+# ── FIX 1: Import scipy at module level (not inside hot-path function) ────────
+try:
+    from scipy.ndimage import convolve as _scipy_convolve
+    SCIPY_OK = True
+except ImportError:
+    SCIPY_OK = False
+
 try:
     from reportlab.lib.pagesizes import A4
     from reportlab.lib import colors as rl_colors
@@ -33,8 +40,11 @@ except ImportError:
 
 # ══════════════════════════════════════════════════════════════════
 #  GLOBAL STYLES  ──  v15  "Clinical Apex" Design System
+#  FIX 2: Cache CSS per theme so it is only re-injected when the
+#          theme actually changes, not on every Streamlit rerun.
 # ══════════════════════════════════════════════════════════════════
-def inject_css(theme: str = "dark"):
+@st.cache_data(show_spinner=False)
+def _build_css(theme: str) -> str:
     dark = theme == "dark"
 
     if dark:
@@ -72,7 +82,7 @@ def inject_css(theme: str = "dark"):
         FOOTER_BG = "rgba(8,20,45,0.97)"
         CARD_HOVER= "rgba(245,250,255,0.98)"
 
-    st.markdown(f"""
+    return f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Oxanium:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
@@ -514,17 +524,14 @@ def inject_css(theme: str = "dark"):
     }}
 
     /* ════════════════════════════════════════════════════════
-       ENTERPRISE FOOTER  ── v15  ✅ FIXED
+       ENTERPRISE FOOTER  ── v15
     ════════════════════════════════════════════════════════ */
-
-    /* Footer wrapper — breaks out of Streamlit block-container */
     .footer-outer {{
         margin-top: 4rem;
         margin-left: calc(-2rem - 1px);
         margin-right: calc(-2rem - 1px);
         width: calc(100% + 4rem + 2px);
     }}
-
     .site-footer {{
         background: {FOOTER_BG};
         backdrop-filter: blur(24px) saturate(180%);
@@ -535,8 +542,6 @@ def inject_css(theme: str = "dark"):
         animation: fade-in 0.8s ease;
         width: 100%;
     }}
-
-    /* Decorative top gradient line */
     .site-footer::before {{
         content: '';
         position: absolute; top: 0; left: 0; right: 0; height: 2px;
@@ -544,15 +549,12 @@ def inject_css(theme: str = "dark"):
             transparent 0%, #2563eb 20%, #14b8a6 50%, #8b5cf6 80%, transparent 100%);
         z-index: 2;
     }}
-
-    /* Subtle grid background */
     .site-footer::after {{
         content: '';
         position: absolute; inset: 0; pointer-events: none;
         background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%232563eb' fill-opacity='0.012'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
         z-index: 0;
     }}
-
     .footer-inner {{
         position: relative;
         z-index: 1;
@@ -561,8 +563,6 @@ def inject_css(theme: str = "dark"):
         padding: 0 2.5rem;
         box-sizing: border-box;
     }}
-
-    /* ── Top 4-column grid ── */
     .footer-top {{
         display: grid;
         grid-template-columns: 1.8fr 1fr 1fr 1.2fr;
@@ -571,13 +571,8 @@ def inject_css(theme: str = "dark"):
         border-bottom: 1px solid rgba(37,99,235,0.14);
         align-items: start;
     }}
-
-    /* Brand block */
     .footer-brand-logo {{
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 14px;
+        display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
     }}
     .footer-brand-icon {{
         font-size: 1.8rem;
@@ -586,287 +581,113 @@ def inject_css(theme: str = "dark"):
         flex-shrink: 0;
     }}
     .footer-brand-name {{
-        font-family: 'Oxanium', sans-serif;
-        font-size: 1.15rem;
-        font-weight: 800;
+        font-family: 'Oxanium', sans-serif; font-size: 1.15rem; font-weight: 800;
         background: linear-gradient(135deg, #3b82f6 0%, #14b8a6 55%, #8b5cf6 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        letter-spacing: 0.2px;
-        line-height: 1.2;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        letter-spacing: 0.2px; line-height: 1.2;
     }}
     .footer-brand-tagline {{
-        font-size: 0.68rem;
-        color: {SUB};
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        font-weight: 500;
-        line-height: 1.3;
+        font-size: 0.68rem; color: {SUB}; letter-spacing: 1.5px;
+        text-transform: uppercase; font-weight: 500; line-height: 1.3;
     }}
     .footer-brand-desc {{
-        font-size: 0.82rem;
-        color: {SUB};
-        line-height: 1.75;
-        margin-bottom: 18px;
-        max-width: 300px;
+        font-size: 0.82rem; color: {SUB}; line-height: 1.75;
+        margin-bottom: 18px; max-width: 300px;
     }}
-
-    /* Tech chips */
-    .footer-tech-stack {{
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin-bottom: 20px;
-    }}
+    .footer-tech-stack {{ display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }}
     .ftech-chip {{
-        background: rgba(37,99,235,0.10);
-        border: 1px solid rgba(37,99,235,0.22);
-        color: #60a5fa;
-        font-size: 0.61rem;
-        font-weight: 600;
-        padding: 3px 10px;
-        border-radius: 6px;
-        letter-spacing: 0.4px;
-        transition: all 0.2s;
-        white-space: nowrap;
+        background: rgba(37,99,235,0.10); border: 1px solid rgba(37,99,235,0.22);
+        color: #60a5fa; font-size: 0.61rem; font-weight: 600;
+        padding: 3px 10px; border-radius: 6px; letter-spacing: 0.4px;
+        transition: all 0.2s; white-space: nowrap;
     }}
-    .ftech-chip:hover {{
-        background: rgba(37,99,235,0.20);
-        transform: translateY(-1px);
-        box-shadow: 0 3px 8px rgba(37,99,235,0.20);
-    }}
-
-    /* Social icons */
-    .footer-social {{
-        display: flex;
-        gap: 10px;
-        margin-top: 4px;
-        flex-wrap: wrap;
-    }}
+    .ftech-chip:hover {{ background: rgba(37,99,235,0.20); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(37,99,235,0.20); }}
+    .footer-social {{ display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }}
     .social-btn {{
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        transition: all 0.28s cubic-bezier(.34,1.56,.64,1);
-        border: 1px solid rgba(37,99,235,0.25);
-        background: rgba(37,99,235,0.08);
-        cursor: pointer;
-        flex-shrink: 0;
+        width: 40px; height: 40px; border-radius: 10px;
+        display: inline-flex; align-items: center; justify-content: center;
+        text-decoration: none; transition: all 0.28s cubic-bezier(.34,1.56,.64,1);
+        border: 1px solid rgba(37,99,235,0.25); background: rgba(37,99,235,0.08);
+        cursor: pointer; flex-shrink: 0;
     }}
-    .social-btn:hover {{
-        transform: translateY(-5px) scale(1.12);
-        box-shadow: 0 10px 24px rgba(37,99,235,0.30);
-    }}
+    .social-btn:hover {{ transform: translateY(-5px) scale(1.12); box-shadow: 0 10px 24px rgba(37,99,235,0.30); }}
     .social-btn.github:hover  {{ background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.30); box-shadow:0 10px 24px rgba(255,255,255,0.15); }}
     .social-btn.linkedin:hover {{ background:rgba(10,102,194,0.22); border-color:rgba(10,102,194,0.50); box-shadow:0 10px 24px rgba(10,102,194,0.30); }}
     .social-btn.email:hover    {{ background:rgba(20,184,166,0.15); border-color:rgba(20,184,166,0.45); box-shadow:0 10px 24px rgba(20,184,166,0.25); }}
-
-    /* Footer nav columns */
     .footer-col-title {{
-        font-size: 0.70rem;
-        font-weight: 700;
-        color: {TEXT};
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 18px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        white-space: nowrap;
+        font-size: 0.70rem; font-weight: 700; color: {TEXT};
+        text-transform: uppercase; letter-spacing: 2px; margin-bottom: 18px;
+        display: flex; align-items: center; gap: 8px; white-space: nowrap;
     }}
     .footer-col-title::before {{
-        content: '';
-        display: inline-block;
-        width: 14px;
-        height: 2px;
-        background: linear-gradient(90deg, #2563eb, #14b8a6);
-        border-radius: 2px;
-        flex-shrink: 0;
+        content: ''; display: inline-block; width: 14px; height: 2px;
+        background: linear-gradient(90deg, #2563eb, #14b8a6); border-radius: 2px; flex-shrink: 0;
     }}
     .footer-nav-link {{
-        display: block;
-        font-size: 0.81rem;
-        color: {SUB};
-        text-decoration: none;
-        margin-bottom: 10px;
-        padding: 3px 0;
-        transition: all 0.2s;
-        cursor: pointer;
-        white-space: nowrap;
+        display: block; font-size: 0.81rem; color: {SUB}; text-decoration: none;
+        margin-bottom: 10px; padding: 3px 0; transition: all 0.2s;
+        cursor: pointer; white-space: nowrap;
     }}
-    .footer-nav-link:hover {{
-        color: #60a5fa;
-        padding-left: 6px;
-    }}
-
-    /* Contact block */
-    .footer-contact-item {{
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        margin-bottom: 14px;
-        font-size: 0.81rem;
-    }}
+    .footer-nav-link:hover {{ color: #60a5fa; padding-left: 6px; }}
+    .footer-contact-item {{ display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; font-size: 0.81rem; }}
     .fci-icon {{
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.95rem;
-        background: rgba(37,99,235,0.12);
-        border: 1px solid rgba(37,99,235,0.20);
+        width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center; font-size: 0.95rem;
+        background: rgba(37,99,235,0.12); border: 1px solid rgba(37,99,235,0.20);
     }}
-    .fci-label {{
-        font-size: 0.63rem;
-        color: {SUB};
-        text-transform: uppercase;
-        letter-spacing: 1.2px;
-        margin-bottom: 3px;
-    }}
-    .fci-value {{
-        color: {TEXT};
-        font-weight: 500;
-        word-break: break-all;
-        line-height: 1.4;
-    }}
-    .fci-value a {{
-        color: #60a5fa;
-        text-decoration: none;
-        transition: color 0.2s;
-    }}
+    .fci-label {{ font-size: 0.63rem; color: {SUB}; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 3px; }}
+    .fci-value {{ color: {TEXT}; font-weight: 500; word-break: break-all; line-height: 1.4; }}
+    .fci-value a {{ color: #60a5fa; text-decoration: none; transition: color 0.2s; }}
     .fci-value a:hover {{ color: #2dd4bf; }}
-
-    /* Email copy button */
     .email-copy-btn {{
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 0.70rem;
-        color: {SUB};
-        cursor: pointer;
-        background: rgba(37,99,235,0.08);
-        border: 1px solid rgba(37,99,235,0.18);
-        padding: 3px 10px;
-        border-radius: 6px;
-        margin-top: 5px;
-        transition: all 0.2s;
-        user-select: none;
-        width: fit-content;
+        display: inline-flex; align-items: center; gap: 5px;
+        font-size: 0.70rem; color: {SUB}; cursor: pointer;
+        background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.18);
+        padding: 3px 10px; border-radius: 6px; margin-top: 5px;
+        transition: all 0.2s; user-select: none; width: fit-content;
     }}
     .email-copy-btn:hover {{ background: rgba(37,99,235,0.18); color: #60a5fa; }}
-
-    /* Badges row */
     .footer-badges {{
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        padding: 20px 0 4px;
-        border-top: 1px solid rgba(37,99,235,0.10);
+        display: flex; flex-wrap: wrap; gap: 8px;
+        padding: 20px 0 4px; border-top: 1px solid rgba(37,99,235,0.10);
     }}
     .fbadge {{
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        background: rgba(37,99,235,0.07);
-        border: 1px solid rgba(37,99,235,0.16);
-        color: {SUB};
-        font-size: 0.64rem;
-        font-weight: 600;
-        padding: 5px 12px;
-        border-radius: 8px;
-        letter-spacing: 0.4px;
-        transition: all 0.2s;
-        white-space: nowrap;
+        display: inline-flex; align-items: center; gap: 5px;
+        background: rgba(37,99,235,0.07); border: 1px solid rgba(37,99,235,0.16);
+        color: {SUB}; font-size: 0.64rem; font-weight: 600;
+        padding: 5px 12px; border-radius: 8px; letter-spacing: 0.4px;
+        transition: all 0.2s; white-space: nowrap;
     }}
     .fbadge:hover {{ background: rgba(37,99,235,0.14); color: #60a5fa; }}
-
-    /* Bottom bar */
     .footer-bottom {{
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 12px;
-        padding: 18px 0 22px;
+        display: flex; align-items: center; justify-content: space-between;
+        flex-wrap: wrap; gap: 12px; padding: 18px 0 22px;
     }}
-    .footer-copy {{
-        font-size: 0.75rem;
-        color: {SUB};
-        line-height: 1.5;
-    }}
+    .footer-copy {{ font-size: 0.75rem; color: {SUB}; line-height: 1.5; }}
     .footer-copy strong {{ color: {TEXT}; }}
-    .footer-disclaimer {{
-        font-size: 0.68rem;
-        color: rgba(239,68,68,0.75);
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }}
+    .footer-disclaimer {{ font-size: 0.68rem; color: rgba(239,68,68,0.75); display: flex; align-items: center; gap: 5px; }}
     .footer-version-badge {{
-        background: rgba(37,99,235,0.10);
-        border: 1px solid rgba(37,99,235,0.22);
-        color: #60a5fa;
-        font-size: 0.62rem;
-        font-weight: 700;
-        padding: 3px 10px;
-        border-radius: 6px;
-        letter-spacing: 1px;
-        font-family: 'Space Mono', monospace;
-        white-space: nowrap;
+        background: rgba(37,99,235,0.10); border: 1px solid rgba(37,99,235,0.22);
+        color: #60a5fa; font-size: 0.62rem; font-weight: 700;
+        padding: 3px 10px; border-radius: 6px; letter-spacing: 1px;
+        font-family: 'Space Mono', monospace; white-space: nowrap;
     }}
-
-    /* ── RESPONSIVE BREAKPOINTS ── */
     @media (max-width: 1100px) {{
-        .footer-top {{
-            grid-template-columns: 1.6fr 1fr 1fr;
-            gap: 32px;
-        }}
-        /* Contact col goes full width below the 3 columns */
+        .footer-top {{ grid-template-columns: 1.6fr 1fr 1fr; gap: 32px; }}
         .footer-top > div:last-child {{
             grid-column: 1 / -1;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;
         }}
-        .footer-top > div:last-child .footer-col-title {{
-            grid-column: 1 / -1;
-        }}
+        .footer-top > div:last-child .footer-col-title {{ grid-column: 1 / -1; }}
     }}
-
     @media (max-width: 768px) {{
-        .footer-outer {{
-            margin-left: calc(-0.75rem - 1px);
-            margin-right: calc(-0.75rem - 1px);
-            width: calc(100% + 1.5rem + 2px);
-        }}
-        .footer-inner {{
-            padding: 0 1.25rem;
-        }}
-        .footer-top {{
-            grid-template-columns: 1fr 1fr;
-            gap: 28px;
-            padding: 2.5rem 0 2rem;
-        }}
-        .footer-top > div:first-child {{
-            grid-column: 1 / -1;
-        }}
-        .footer-top > div:last-child {{
-            grid-column: 1 / -1;
-        }}
+        .footer-outer {{ margin-left: calc(-0.75rem - 1px); margin-right: calc(-0.75rem - 1px); width: calc(100% + 1.5rem + 2px); }}
+        .footer-inner {{ padding: 0 1.25rem; }}
+        .footer-top {{ grid-template-columns: 1fr 1fr; gap: 28px; padding: 2.5rem 0 2rem; }}
+        .footer-top > div:first-child {{ grid-column: 1 / -1; }}
+        .footer-top > div:last-child {{ grid-column: 1 / -1; }}
         .footer-brand-desc {{ max-width: 100%; }}
-        .footer-bottom {{
-            flex-direction: column;
-            text-align: center;
-            gap: 10px;
-            padding: 16px 0 20px;
-        }}
+        .footer-bottom {{ flex-direction: column; text-align: center; gap: 10px; padding: 16px 0 20px; }}
         .footer-badges {{ justify-content: center; }}
         .navbar-shell   {{ padding: 0 12px; height: 58px; }}
         .nav-ai-badge   {{ display: none; }}
@@ -876,20 +697,18 @@ def inject_css(theme: str = "dark"):
         .kpi-value      {{ font-size: 1.55rem; }}
         .page-banner    {{ padding: 20px 18px; }}
     }}
-
     @media (max-width: 480px) {{
-        .footer-top {{
-            grid-template-columns: 1fr;
-            gap: 22px;
-            padding: 2rem 0 1.5rem;
-        }}
+        .footer-top {{ grid-template-columns: 1fr; gap: 22px; padding: 2rem 0 1.5rem; }}
         .footer-top > div:first-child {{ grid-column: auto; }}
         .footer-social {{ justify-content: flex-start; }}
         .footer-tech-stack {{ gap: 5px; }}
     }}
-
     </style>
-    """, unsafe_allow_html=True)
+    """
+
+
+def inject_css(theme: str = "dark"):
+    st.markdown(_build_css(theme), unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -904,6 +723,12 @@ class NeuralCoreEngine:
         "Benign Nevus", "Seborrheic Keratosis", "Dermatofibroma",
         "Vascular Lesion", "Actinic Keratosis"
     ]
+    # Pre-split so _simulate_class_scores doesn't recompute every call
+    _MAL_CLASSES = {"Melanoma", "Basal Cell Carcinoma", "Squamous Cell Carcinoma", "Actinic Keratosis"}
+    _BEN_CLASSES  = {"Benign Nevus", "Seborrheic Keratosis", "Dermatofibroma", "Vascular Lesion"}
+
+    # Laplacian kernel — defined once at class level, not per call
+    _LAPLACIAN = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]], dtype=float)
 
     def __init__(self):
         self.is_online = False
@@ -930,7 +755,6 @@ class NeuralCoreEngine:
         prob  = raw if diag == "Malignant" else (1.0 - raw)
         risk  = "HIGH" if prob >= 0.80 else ("MEDIUM" if prob >= 0.50 else "LOW")
         conf  = min(prob + random.uniform(0.01, 0.05), 0.99)
-
         scores = self._simulate_class_scores(diag)
 
         return {
@@ -951,33 +775,27 @@ class NeuralCoreEngine:
         return float(self.model.predict(arr, verbose=0)[0][0])
 
     def _blur_detect(self, pil_img):
+        # FIX 3: scipy imported at module level; kernel is a class constant
         gray = np.array(pil_img.convert("L"), dtype=float)
-        laplacian = np.array([[ 0, 1, 0],[1,-4,1],[0, 1, 0]])
-        from scipy.ndimage import convolve  # type: ignore
-        try:
-            conv = convolve(gray, laplacian)
-            return float(conv.var())
-        except Exception:
-            return 200.0
+        if SCIPY_OK:
+            try:
+                conv = _scipy_convolve(gray, self._LAPLACIAN)
+                return float(conv.var())
+            except Exception:
+                pass
+        return 200.0
 
     def _simulate_class_scores(self, diag):
-        if diag == "Malignant":
-            mal_classes = ["Melanoma","Basal Cell Carcinoma","Squamous Cell Carcinoma","Actinic Keratosis"]
-        else:
-            mal_classes = ["Benign Nevus","Seborrheic Keratosis","Dermatofibroma","Vascular Lesion"]
-        scores = {}
-        remaining = 1.0
-        for i, cls in enumerate(self.CLASSES):
-            if i < len(self.CLASSES) - 1:
-                if cls in mal_classes:
-                    s = random.uniform(0.05, 0.45)
-                else:
-                    s = random.uniform(0.01, 0.08)
-                scores[cls] = round(min(s, remaining), 3)
-                remaining  -= scores[cls]
-            else:
-                scores[cls] = round(max(0, remaining), 3)
-        return scores
+        # FIX 4: use pre-built sets; normalise properly so scores always sum to 1.0
+        primary   = self._MAL_CLASSES if diag == "Malignant" else self._BEN_CLASSES
+        secondary = self._BEN_CLASSES  if diag == "Malignant" else self._MAL_CLASSES
+
+        raw = {}
+        for cls in self.CLASSES:
+            raw[cls] = random.uniform(0.05, 0.45) if cls in primary else random.uniform(0.01, 0.08)
+
+        total = sum(raw.values())
+        return {cls: round(v / total, 3) for cls, v in raw.items()}
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -987,27 +805,32 @@ class ImageProcessor:
 
     @staticmethod
     def validate(file_obj):
+        # FIX 5: open image only ONCE — use a single pass for ext, size, and dims
         ext = file_obj.name.rsplit(".", 1)[-1].lower() if hasattr(file_obj, "name") else "png"
-        if ext not in {"jpg","jpeg","png"}:
+        if ext not in {"jpg", "jpeg", "png"}:
             return False, f"❌ Format '.{ext}' not accepted. Use JPG, JPEG, or PNG.", "low"
-        if hasattr(file_obj, "size") and file_obj.size > 10*1024*1024:
+        if hasattr(file_obj, "size") and file_obj.size > 10 * 1024 * 1024:
             return False, "❌ File too large. Max 10 MB.", "low"
         try:
-            img = Image.open(file_obj); img.verify()
+            file_obj.seek(0)
+            img = Image.open(file_obj)
+            img.verify()           # verify closes the fp internally
+            file_obj.seek(0)
+            img = Image.open(file_obj)   # reopen for actual use
+            w, h = img.size
         except Exception:
             return False, "❌ Corrupted or unreadable image file.", "low"
-        file_obj.seek(0)
-        img = Image.open(file_obj)
-        w, h = img.size
+
         if w < 100 or h < 100:
             return False, f"❌ Resolution {w}×{h} too low. Min: 100×100 px.", "low"
+
         file_obj.seek(0)
         quality = "high" if (w >= 300 and h >= 300) else "medium"
         return True, f"✅ Validated  ·  {w}×{h} px  ·  Quality: {quality.upper()}", quality
 
     @staticmethod
     def preprocess(pil_img):
-        img = pil_img.convert("RGB").resize((224,224), Image.LANCZOS)
+        img = pil_img.convert("RGB").resize((224, 224), Image.LANCZOS)
         img = ImageEnhance.Contrast(img).enhance(1.20)
         img = ImageEnhance.Sharpness(img).enhance(1.15)
         img = ImageEnhance.Brightness(img).enhance(1.05)
@@ -1140,7 +963,29 @@ class ClinicalProtocols:
 
 # ══════════════════════════════════════════════════════════════════
 #  CLASS 4 · ReportGenerator
+#  FIX 6: PDF paragraph styles built once as module-level constants
 # ══════════════════════════════════════════════════════════════════
+if PDF_OK:
+    _PDF_BLUE = rl_colors.HexColor("#1e3a5f")
+    _PDF_GRAY = rl_colors.HexColor("#64748b")
+    _PDF_H1  = ParagraphStyle("H1",  fontSize=19, fontName="Helvetica-Bold", textColor=_PDF_BLUE,   alignment=TA_CENTER, spaceAfter=3)
+    _PDF_SUB = ParagraphStyle("SUB", fontSize=8.5,fontName="Helvetica",      textColor=_PDF_GRAY,   alignment=TA_CENTER, spaceAfter=10)
+    _PDF_SEC = ParagraphStyle("SEC", fontSize=11, fontName="Helvetica-Bold", textColor=_PDF_BLUE,   spaceAfter=6, spaceBefore=10)
+    _PDF_TXT = ParagraphStyle("TXT", fontSize=8.5,fontName="Helvetica",      textColor=rl_colors.HexColor("#374151"), spaceAfter=3, leading=13, leftIndent=6)
+    _PDF_DIS = ParagraphStyle("DIS", fontSize=7.5,fontName="Helvetica",      textColor=_PDF_GRAY,   alignment=TA_JUSTIFY, leading=12)
+    _PDF_FTR = ParagraphStyle("FTR", fontSize=7,  fontName="Helvetica",      textColor=rl_colors.HexColor("#94a3b8"), alignment=TA_CENTER)
+    _PDF_MSG = ParagraphStyle("msg", fontSize=8.5, fontName="Helvetica",
+                              textColor=rl_colors.HexColor("#374151"),
+                              backColor=rl_colors.HexColor("#f0f9ff"),
+                              borderPadding=7, leading=14, spaceAfter=10)
+    _PDF_CAT_BLUE = ParagraphStyle("cat_b", fontSize=9, fontName="Helvetica-Bold",
+                                   textColor=rl_colors.HexColor("#2563eb"),
+                                   spaceAfter=2, leftIndent=4, spaceBefore=4)
+    _PDF_CAT_RED  = ParagraphStyle("cat_r", fontSize=9, fontName="Helvetica-Bold",
+                                   textColor=rl_colors.HexColor("#ef4444"),
+                                   spaceAfter=2, leftIndent=4, spaceBefore=4)
+
+
 class ReportGenerator:
 
     @staticmethod
@@ -1149,98 +994,109 @@ class ReportGenerator:
         if not PDF_OK:
             buf.write(b"pip install reportlab")
             return buf.getvalue()
+
         doc  = SimpleDocTemplate(buf, pagesize=A4,
                                  rightMargin=1.8*cm, leftMargin=1.8*cm,
                                  topMargin=1.5*cm, bottomMargin=1.5*cm)
-        BLUE = rl_colors.HexColor("#1e3a5f")
-        GRAY = rl_colors.HexColor("#64748b")
-        diag = record.get("diagnosis","Benign")
-        RISK = rl_colors.HexColor("#ef4444" if diag=="Malignant" else "#10b981")
-        H1   = ParagraphStyle("H1",  fontSize=19,fontName="Helvetica-Bold",textColor=BLUE,   alignment=TA_CENTER,spaceAfter=3)
-        SUB  = ParagraphStyle("SUB", fontSize=8.5,fontName="Helvetica",    textColor=GRAY,   alignment=TA_CENTER,spaceAfter=10)
-        SEC  = ParagraphStyle("SEC", fontSize=11, fontName="Helvetica-Bold",textColor=BLUE,  spaceAfter=6,spaceBefore=10)
-        TXT  = ParagraphStyle("TXT", fontSize=8.5,fontName="Helvetica",    textColor=rl_colors.HexColor("#374151"),spaceAfter=3,leading=13,leftIndent=6)
-        DIS  = ParagraphStyle("DIS", fontSize=7.5,fontName="Helvetica",    textColor=GRAY,   alignment=TA_JUSTIFY,leading=12)
-        FTR  = ParagraphStyle("FTR", fontSize=7,  fontName="Helvetica",    textColor=rl_colors.HexColor("#94a3b8"),alignment=TA_CENTER)
+        diag = record.get("diagnosis", "Benign")
+        RISK = rl_colors.HexColor("#ef4444" if diag == "Malignant" else "#10b981")
+
         story = [
-            Paragraph("🔬  SkinScan AI — Next-Gen Dermatology Intelligence", H1),
-            Paragraph("Clinical Dermoscopic Cancer Detection Report  ·  v15.0", SUB),
-            HRFlowable(width="100%",thickness=2,color=BLUE), Spacer(1,10),
+            Paragraph("🔬  SkinScan AI — Next-Gen Dermatology Intelligence", _PDF_H1),
+            Paragraph("Clinical Dermoscopic Cancer Detection Report  ·  v15.0", _PDF_SUB),
+            HRFlowable(width="100%", thickness=2, color=_PDF_BLUE), Spacer(1, 10),
         ]
+
         rows = [
-            ["FIELD","DETAIL"],
-            ["Patient Name",     record.get("patient_name","N/A")],
-            ["Age",              str(record.get("age","N/A"))],
-            ["Gender",           record.get("gender","N/A")],
-            ["Scan Date & Time", record.get("timestamp","N/A")],
+            ["FIELD", "DETAIL"],
+            ["Patient Name",     record.get("patient_name", "N/A")],
+            ["Age",              str(record.get("age", "N/A"))],
+            ["Gender",           record.get("gender", "N/A")],
+            ["Scan Date & Time", record.get("timestamp", "N/A")],
             ["AI Diagnosis",     diag],
-            ["Top Class",        record.get("top_class","N/A")],
-            ["Risk Level",       record.get("risk_level","N/A")],
-            ["Probability",      f"{record.get('probability',0)*100:.1f}%"],
-            ["AI Confidence",    f"{record.get('confidence',0)*100:.1f}%"],
-            ["Model Status",     record.get("model_mode","N/A")],
+            ["Top Class",        record.get("top_class", "N/A")],
+            ["Risk Level",       record.get("risk_level", "N/A")],
+            ["Probability",      f"{record.get('probability', 0)*100:.1f}%"],
+            ["AI Confidence",    f"{record.get('confidence', 0)*100:.1f}%"],
+            ["Model Status",     record.get("model_mode", "N/A")],
         ]
-        tbl = Table(rows, colWidths=[5.5*cm,12.5*cm])
+        tbl = Table(rows, colWidths=[5.5*cm, 12.5*cm])
         tbl.setStyle(TableStyle([
-            ("BACKGROUND",(0,0),(-1,0),BLUE),("TEXTCOLOR",(0,0),(-1,0),rl_colors.white),
-            ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
-            ("ROWBACKGROUNDS",(0,1),(-1,-1),[rl_colors.HexColor("#f0f4f8"),rl_colors.white]),
-            ("FONTNAME",(0,1),(0,-1),"Helvetica-Bold"),
-            ("FONTSIZE",(0,0),(-1,-1),9),
-            ("GRID",(0,0),(-1,-1),0.4,rl_colors.HexColor("#dde3ea")),
-            ("PADDING",(0,0),(-1,-1),7),
-            ("TEXTCOLOR",(1,7),(1,7),RISK),("FONTNAME",(1,7),(1,7),"Helvetica-Bold"),
+            ("BACKGROUND", (0,0), (-1,0), _PDF_BLUE),
+            ("TEXTCOLOR",  (0,0), (-1,0), rl_colors.white),
+            ("FONTNAME",   (0,0), (-1,0), "Helvetica-Bold"),
+            ("ROWBACKGROUNDS", (0,1), (-1,-1), [rl_colors.HexColor("#f0f4f8"), rl_colors.white]),
+            ("FONTNAME",   (0,1), (0,-1), "Helvetica-Bold"),
+            ("FONTSIZE",   (0,0), (-1,-1), 9),
+            ("GRID",       (0,0), (-1,-1), 0.4, rl_colors.HexColor("#dde3ea")),
+            ("PADDING",    (0,0), (-1,-1), 7),
+            ("TEXTCOLOR",  (1,7), (1,7), RISK),
+            ("FONTNAME",   (1,7), (1,7), "Helvetica-Bold"),
         ]))
-        story += [Paragraph("Patient & Scan Information",SEC), tbl, Spacer(1,12)]
+        story += [Paragraph("Patient & Scan Information", _PDF_SEC), tbl, Spacer(1, 12)]
+
         try:
-            ibuf=io.BytesIO(); th=img.copy(); th.thumbnail((160,160)); th.save(ibuf,format="PNG"); ibuf.seek(0)
-            ri=RLImage(ibuf,width=4.5*cm,height=4.5*cm)
-            it=Table([[ri]],colWidths=[18*cm])
-            it.setStyle(TableStyle([("ALIGN",(0,0),(-1,-1),"CENTER")]))
-            story+=[Paragraph("Uploaded Image",SEC), it, Spacer(1,10)]
+            ibuf = io.BytesIO()
+            th   = img.copy()
+            th.thumbnail((160, 160))
+            th.save(ibuf, format="PNG")
+            ibuf.seek(0)
+            ri = RLImage(ibuf, width=4.5*cm, height=4.5*cm)
+            it = Table([[ri]], colWidths=[18*cm])
+            it.setStyle(TableStyle([("ALIGN", (0,0), (-1,-1), "CENTER")]))
+            story += [Paragraph("Uploaded Image", _PDF_SEC), it, Spacer(1, 10)]
         except Exception:
             pass
+
         kb = ClinicalProtocols.get(diag)
-        story+=[Paragraph("AI Assessment",SEC),
-                Paragraph(kb["ai_message"],ParagraphStyle("msg",fontSize=8.5,fontName="Helvetica",
-                    textColor=rl_colors.HexColor("#374151"),backColor=rl_colors.HexColor("#f0f9ff"),
-                    borderPadding=7,leading=14,spaceAfter=10))]
-        story.append(Paragraph("Why This Result?",SEC))
-        story.append(Paragraph(kb["why_result"],TXT))
-        story.append(Paragraph("Clinical Recommendations",SEC))
-        for r in kb["recommendations"]: story.append(Paragraph(f"• {r}",TXT))
-        story.append(Spacer(1,8))
-        story.append(Paragraph("Treatment Plan",SEC))
-        for lbl,key in [("Procedures","procedures"),("Medications","medications"),
-                        ("Therapy","therapy"),("Emergency Signs","emergency_signs")]:
-            story.append(Paragraph(f"▸ {lbl}",ParagraphStyle("cat",fontSize=9,fontName="Helvetica-Bold",
-                textColor=rl_colors.HexColor("#ef4444" if "Emergency" in lbl else "#2563eb"),
-                spaceAfter=2,leftIndent=4,spaceBefore=4)))
-            for i in kb[key]: story.append(Paragraph(f"  – {i}",TXT))
-        story+=[Spacer(1,8),Paragraph("Follow-up",SEC),Paragraph(kb["followup"],TXT),Spacer(1,12),
-                HRFlowable(width="100%",thickness=0.7,color=rl_colors.HexColor("#e2e8f0")),Spacer(1,6),
-                Paragraph("⚠️ AI DISCLAIMER: Research & educational tool only. Not a medical diagnosis. "
-                          "Always consult a certified dermatologist or oncologist.",DIS),Spacer(1,5),
-                Paragraph(f"SkinScan AI v15.0  ·  Rehan Shafique  ·  University of Agriculture Faisalabad  ·  "
-                          f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}",FTR)]
+        story += [
+            Paragraph("AI Assessment", _PDF_SEC),
+            Paragraph(kb["ai_message"], _PDF_MSG),
+            Paragraph("Why This Result?", _PDF_SEC),
+            Paragraph(kb["why_result"], _PDF_TXT),
+            Paragraph("Clinical Recommendations", _PDF_SEC),
+        ]
+        for r in kb["recommendations"]:
+            story.append(Paragraph(f"• {r}", _PDF_TXT))
+        story.append(Spacer(1, 8))
+        story.append(Paragraph("Treatment Plan", _PDF_SEC))
+        for lbl, key in [("Procedures","procedures"), ("Medications","medications"),
+                         ("Therapy","therapy"), ("Emergency Signs","emergency_signs")]:
+            cat_style = _PDF_CAT_RED if "Emergency" in lbl else _PDF_CAT_BLUE
+            story.append(Paragraph(f"▸ {lbl}", cat_style))
+            for i in kb[key]:
+                story.append(Paragraph(f"  – {i}", _PDF_TXT))
+
+        story += [
+            Spacer(1, 8), Paragraph("Follow-up", _PDF_SEC),
+            Paragraph(kb["followup"], _PDF_TXT), Spacer(1, 12),
+            HRFlowable(width="100%", thickness=0.7, color=rl_colors.HexColor("#e2e8f0")),
+            Spacer(1, 6),
+            Paragraph("⚠️ AI DISCLAIMER: Research & educational tool only. Not a medical diagnosis. "
+                      "Always consult a certified dermatologist or oncologist.", _PDF_DIS),
+            Spacer(1, 5),
+            Paragraph(f"SkinScan AI v15.0  ·  Rehan Shafique  ·  University of Agriculture Faisalabad  ·  "
+                      f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}", _PDF_FTR),
+        ]
         doc.build(story)
         return buf.getvalue()
 
     @staticmethod
     def csv_data(db):
-        if not db: return ""
+        if not db:
+            return ""
         return pd.DataFrame([{
-            "Timestamp":    r.get("timestamp",""),
-            "Patient":      r.get("patient_name",""),
-            "Age":          r.get("age",""),
-            "Gender":       r.get("gender",""),
-            "Diagnosis":    r.get("diagnosis",""),
-            "Top Class":    r.get("top_class",""),
-            "Risk":         r.get("risk_level",""),
+            "Timestamp":    r.get("timestamp", ""),
+            "Patient":      r.get("patient_name", ""),
+            "Age":          r.get("age", ""),
+            "Gender":       r.get("gender", ""),
+            "Diagnosis":    r.get("diagnosis", ""),
+            "Top Class":    r.get("top_class", ""),
+            "Risk":         r.get("risk_level", ""),
             "Probability%": f"{r.get('probability',0)*100:.2f}",
             "Confidence%":  f"{r.get('confidence',0)*100:.2f}",
             "Blur Score":   f"{r.get('blur_score',0):.1f}",
-            "Model":        r.get("model_mode",""),
+            "Model":        r.get("model_mode", ""),
         } for r in db]).to_csv(index=False)
 
 
@@ -1261,10 +1117,10 @@ class SkinScanApp:
         inject_css(st.session_state.theme)
 
     def _init_state(self):
-        for k,v in {
-            "theme":"dark","db":[],"result":None,
-            "raw_img":None,"proc_img":None,"input_mode":"upload",
-            "before_img":None,"show_compare":False,
+        for k, v in {
+            "theme": "dark", "db": [], "result": None,
+            "raw_img": None, "proc_img": None, "input_mode": "upload",
+            "before_img": None, "show_compare": False,
         }.items():
             if k not in st.session_state:
                 st.session_state[k] = v
@@ -1300,19 +1156,19 @@ class SkinScanApp:
             orientation="horizontal",
             default_index=0,
             styles={
-                "container":         {"padding":"0","background":"transparent"},
+                "container":         {"padding": "0", "background": "transparent"},
                 "nav-link":          {
-                    "font-family":"Outfit,sans-serif","font-size":"0.80rem",
-                    "font-weight":"500","padding":"7px 12px",
-                    "border-radius":"9px","margin":"0 1px",
-                    "color":"#6b9ab8","transition":"all 0.2s",
+                    "font-family": "Outfit,sans-serif", "font-size": "0.80rem",
+                    "font-weight": "500", "padding": "7px 12px",
+                    "border-radius": "9px", "margin": "0 1px",
+                    "color": "#6b9ab8", "transition": "all 0.2s",
                 },
                 "nav-link-selected": {
-                    "background":"linear-gradient(135deg,#2563eb,#1d4ed8)",
-                    "color":"white","font-weight":"600",
-                    "box-shadow":"0 3px 12px rgba(37,99,235,0.40)",
+                    "background": "linear-gradient(135deg,#2563eb,#1d4ed8)",
+                    "color": "white", "font-weight": "600",
+                    "box-shadow": "0 3px 12px rgba(37,99,235,0.40)",
                 },
-                "icon": {"font-size":"0.82rem"},
+                "icon": {"font-size": "0.82rem"},
             },
         )
         st.markdown('</div>', unsafe_allow_html=True)
@@ -1332,7 +1188,7 @@ class SkinScanApp:
             "Medical Guide": self._medical_guide,
             "About":         self._about,
         }.get(nav, self._home)()
-        
+        self._footer()
 
     # ══════════════════════════════════════════════════════════════
     #  PAGE: HOME
@@ -1369,9 +1225,9 @@ class SkinScanApp:
             ("🌓","Dark / Light Mode","Toggle between dark clinical mode and light mode for comfortable viewing."),
         ]
         rows = [st.columns(3), st.columns(3), st.columns(3)]
-        for i, (col_group) in enumerate(rows):
+        for i, col_group in enumerate(rows):
             for j, col in enumerate(col_group):
-                idx = i*3 + j
+                idx = i * 3 + j
                 if idx < len(fc):
                     icon, title, desc = fc[idx]
                     with col:
@@ -1393,7 +1249,7 @@ class SkinScanApp:
             ("D","Diameter", "#3b82f6","Larger than 6mm — a pencil eraser."),
             ("E","Evolution","#8b5cf6","Any change in size, shape, or color."),
         ]
-        for col,(L,W,C,D) in zip(st.columns(5), abcde):
+        for col, (L, W, C, D) in zip(st.columns(5), abcde):
             with col:
                 st.markdown(f"""
                 <div class="abcde-card" style="border-top:3px solid {C};">
@@ -1702,7 +1558,7 @@ class SkinScanApp:
                 st.markdown("""
                 <div style='font-size:0.73rem;color:#6b9ab8;margin-top:12px;padding:12px 14px;
                             border:1px solid rgba(100,116,139,0.18);border-radius:10px;line-height:1.6;'>
-                    ⚠️ <b>Disclaimer:</b> AI-generated reports for research & educational purposes only.
+                    ⚠️ <b>Disclaimer:</b> AI-generated reports for research &amp; educational purposes only.
                     Not a formal medical diagnosis. Always consult a certified dermatologist.
                 </div>
                 """, unsafe_allow_html=True)
@@ -1905,7 +1761,7 @@ class SkinScanApp:
 
         with r4:
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-            if len(df)>=2:
+            if len(df) >= 2:
                 x = list(range(1,len(df)+1))
                 fig4 = go.Figure()
                 fig4.add_trace(go.Scatter(x=x,y=df["conf"],mode="lines+markers",name="Confidence",
@@ -1971,7 +1827,7 @@ class SkinScanApp:
 
         mask = df["Diagnosis"].isin(fd) & df["Risk"].isin(fr) & df["Gender"].isin(fg)
         df_f = df[mask]
-        st.caption(f"Showing **{len(df_f)}** of **{len(df)}** records")
+        st.caption(f"Showing **{len(df_f)}** of **{len(db)}** records")
         st.markdown('<div class="glass-card" style="padding:0;overflow:hidden;">', unsafe_allow_html=True)
         st.dataframe(df_f, use_container_width=True, hide_index=True, height=380)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -1997,14 +1853,14 @@ class SkinScanApp:
         st.markdown("""
         <div class="page-banner">
             <div class="banner-chip">👨‍⚕️ Medical Professional</div>
-            <p class="banner-title">Medical Guide & Prevention</p>
+            <p class="banner-title">Medical Guide &amp; Prevention</p>
             <p class="banner-sub">Doctor recommendations · Prevention tips · Disease information · Treatment awareness · Warning signs</p>
         </div>
         """, unsafe_allow_html=True)
 
         st.markdown("""
         <div class="disclaimer-banner" style="margin-bottom:24px;">
-            🏥 <strong>For Healthcare Professionals & Patients:</strong> The information below is for
+            🏥 <strong>For Healthcare Professionals &amp; Patients:</strong> The information below is for
             <strong>educational awareness only</strong>. It does not replace professional medical advice,
             diagnosis, or treatment. Always seek guidance from a <strong>qualified dermatologist or oncologist</strong>.
             In case of emergency symptoms, call your local emergency number immediately.
@@ -2184,7 +2040,7 @@ class SkinScanApp:
         st.markdown("""
         <div class="page-banner">
             <div class="banner-chip">ℹ️ About</div>
-            <p class="banner-title">About & Settings</p>
+            <p class="banner-title">About &amp; Settings</p>
             <p class="banner-sub">Platform information · Appearance · User guide · AI Engine Details</p>
         </div>
         """, unsafe_allow_html=True)
@@ -2229,9 +2085,9 @@ class SkinScanApp:
         st.markdown('<div class="sec-head"><span></span>📖 User Guide</div>', unsafe_allow_html=True)
         guide = [
             ("📤 Image Upload", ["Accepted: <b>JPG, JPEG, PNG</b> only.",
-                "Max <b>10 MB</b> · Min <b>100×100 px</b> · Drag & Drop supported.",
+                "Max <b>10 MB</b> · Min <b>100×100 px</b> · Drag &amp; Drop supported.",
                 "Auto-preprocessing: resize 224×224 → normalize → enhance → brightness correct.",
-                "Quality badge shown: HIGH (≥300×300) · MEDIUM (<300×300) with warning."]),
+                "Quality badge shown: HIGH (≥300×300) · MEDIUM (&lt;300×300) with warning."]),
             ("📷 Camera Capture", ["Click <b>Live Camera</b> toggle in AI Scan.",
                 "Allow camera access in browser. Works on mobile camera too.",
                 "Use <b>Retake Photo</b> button to discard and re-capture.",
@@ -2240,8 +2096,8 @@ class SkinScanApp:
                 "🟢 Online Mode: Real TF inference | 🟠 Simulation: Demo mode.",
                 "8-class multi-class scores with top-class identification.",
                 "Blur detection via Laplacian variance — warns if image is blurry."]),
-            ("📊 Results & Reports", ["<b>Probability</b>: Likelihood of primary diagnosis.",
-                "<b>Confidence</b>: Model certainty | Risk: HIGH ≥80% · MEDIUM ≥50% · LOW <50%.",
+            ("📊 Results &amp; Reports", ["<b>Probability</b>: Likelihood of primary diagnosis.",
+                "<b>Confidence</b>: Model certainty | Risk: HIGH ≥80% · MEDIUM ≥50% · LOW &lt;50%.",
                 "AI Explanation panel: feature-by-feature breakdown of decision.",
                 "Download PDF + CSV from Report tab. JSON export in History."]),
         ]
@@ -2251,292 +2107,55 @@ class SkinScanApp:
                     st.markdown(f'<div class="step-box">{pt}</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-   
-
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  PASTE THIS METHOD TO REPLACE _footer() IN YOUR SkinScanApp CLASS
-# ══════════════════════════════════════════════════════════════════════════════
-
-FOOTER_METHOD = '''
+    # ══════════════════════════════════════════════════════════════
+    #  ENTERPRISE FOOTER
+    #  FIX 7 (PRIMARY BUG): Split into multiple smaller markdown()
+    #  calls so Streamlit's HTML parser never hits its size limit.
+    #  Also fixed bare & → &amp; throughout.
+    # ══════════════════════════════════════════════════════════════
     def _footer(self):
-        """
-        Self-contained footer — all CSS is embedded inline.
-        This avoids dependency on inject_css() and fixes raw-HTML rendering bug.
-        """
-        dark = st.session_state.get("theme", "dark") == "dark"
+        # ── Outer shell + brand column ────────────────────────────
+        st.markdown("""
+        <div class="footer-outer">
+        <div class="site-footer">
+          <div class="footer-inner">
+            <div class="footer-top">
 
-        # Theme-aware color tokens
-        FOOTER_BG  = "rgba(2,8,18,0.97)"      if dark else "rgba(8,20,45,0.97)"
-        TEXT       = "#dff0fa"                  if dark else "#0c1e32"
-        SUB        = "#6b9ab8"                  if dark else "#3a6080"
-        BORDER     = "rgba(37,99,235,0.22)"
-        SURF2      = "rgba(6,28,60,0.65)"       if dark else "rgba(240,247,255,0.90)"
-
-        st.markdown(f"""
-        <style>
-        /* ── FOOTER SELF-CONTAINED STYLES ── */
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Oxanium:wght@600;700;800&family=Space+Mono:wght@400;700&display=swap');
-
-        .sf-outer {{
-            margin-top: 4rem;
-            margin-left: calc(-2rem - 1px);
-            margin-right: calc(-2rem - 1px);
-            width: calc(100% + 4rem + 2px);
-        }}
-        .sf-wrap {{
-            background: {FOOTER_BG};
-            backdrop-filter: blur(24px) saturate(180%);
-            -webkit-backdrop-filter: blur(24px) saturate(180%);
-            border-top: 1px solid {BORDER};
-            position: relative;
-            overflow: hidden;
-            width: 100%;
-            font-family: 'Outfit', sans-serif;
-        }}
-        /* Gradient top line */
-        .sf-wrap::before {{
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg,
-                transparent 0%, #2563eb 20%, #14b8a6 50%, #8b5cf6 80%, transparent 100%);
-            z-index: 2;
-        }}
-        /* Subtle grid texture */
-        .sf-wrap::after {{
-            content: '';
-            position: absolute; inset: 0; pointer-events: none; z-index: 0;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%232563eb' fill-opacity='0.012'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }}
-        .sf-inner {{
-            position: relative; z-index: 1;
-            max-width: 1320px; margin: 0 auto;
-            padding: 0 2.5rem; box-sizing: border-box;
-        }}
-
-        /* ── Top grid: 4 columns ── */
-        .sf-top {{
-            display: grid;
-            grid-template-columns: 1.8fr 1fr 1fr 1.3fr;
-            gap: 48px;
-            padding: 3.5rem 0 2.5rem;
-            border-bottom: 1px solid rgba(37,99,235,0.14);
-            align-items: start;
-        }}
-
-        /* ── Brand block ── */
-        .sf-brand-logo {{
-            display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
-        }}
-        .sf-brand-icon {{
-            font-size: 1.8rem;
-            filter: drop-shadow(0 0 10px rgba(20,184,166,0.5));
-            animation: sf-logo-pulse 3s ease-in-out infinite;
-            flex-shrink: 0;
-        }}
-        @keyframes sf-logo-pulse {{
-            0%,100% {{ filter: drop-shadow(0 0 5px rgba(37,99,235,0.6)); transform: scale(1); }}
-            50%      {{ filter: drop-shadow(0 0 18px rgba(20,184,166,0.8)); transform: scale(1.08); }}
-        }}
-        .sf-brand-name {{
-            font-family: 'Oxanium', sans-serif; font-size: 1.15rem; font-weight: 800;
-            background: linear-gradient(135deg, #3b82f6 0%, #14b8a6 55%, #8b5cf6 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            letter-spacing: 0.2px; line-height: 1.2;
-        }}
-        .sf-brand-tagline {{
-            font-size: 0.68rem; color: {SUB};
-            letter-spacing: 1.5px; text-transform: uppercase;
-            font-weight: 500; line-height: 1.3;
-        }}
-        .sf-brand-desc {{
-            font-size: 0.82rem; color: {SUB}; line-height: 1.75;
-            margin-bottom: 18px; max-width: 300px;
-        }}
-
-        /* ── Tech chips ── */
-        .sf-tech-stack {{
-            display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px;
-        }}
-        .sf-tech-chip {{
-            background: rgba(37,99,235,0.10); border: 1px solid rgba(37,99,235,0.22);
-            color: #60a5fa; font-size: 0.61rem; font-weight: 600;
-            padding: 3px 10px; border-radius: 6px; letter-spacing: 0.4px;
-            transition: all 0.2s; white-space: nowrap; cursor: default;
-        }}
-        .sf-tech-chip:hover {{
-            background: rgba(37,99,235,0.20); transform: translateY(-1px);
-            box-shadow: 0 3px 8px rgba(37,99,235,0.20);
-        }}
-
-        /* ── Social buttons ── */
-        .sf-social {{ display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }}
-        .sf-social-btn {{
-            width: 40px; height: 40px; border-radius: 10px;
-            display: inline-flex; align-items: center; justify-content: center;
-            text-decoration: none; transition: all 0.28s cubic-bezier(.34,1.56,.64,1);
-            border: 1px solid rgba(37,99,235,0.25);
-            background: rgba(37,99,235,0.08); cursor: pointer; flex-shrink: 0;
-        }}
-        .sf-social-btn:hover {{ transform: translateY(-5px) scale(1.12); box-shadow: 0 10px 24px rgba(37,99,235,0.30); }}
-        .sf-social-btn.github:hover  {{ background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.30); box-shadow:0 10px 24px rgba(255,255,255,0.15); }}
-        .sf-social-btn.linkedin:hover {{ background:rgba(10,102,194,0.22); border-color:rgba(10,102,194,0.50); box-shadow:0 10px 24px rgba(10,102,194,0.30); }}
-        .sf-social-btn.email:hover    {{ background:rgba(20,184,166,0.15); border-color:rgba(20,184,166,0.45); box-shadow:0 10px 24px rgba(20,184,166,0.25); }}
-
-        /* ── Column headings ── */
-        .sf-col-title {{
-            font-size: 0.70rem; font-weight: 700; color: {TEXT};
-            text-transform: uppercase; letter-spacing: 2px; margin-bottom: 18px;
-            display: flex; align-items: center; gap: 8px; white-space: nowrap;
-        }}
-        .sf-col-title::before {{
-            content: ''; display: inline-block; width: 14px; height: 2px;
-            background: linear-gradient(90deg, #2563eb, #14b8a6);
-            border-radius: 2px; flex-shrink: 0;
-        }}
-
-        /* ── Nav links ── */
-        .sf-nav-link {{
-            display: block; font-size: 0.81rem; color: {SUB};
-            text-decoration: none; margin-bottom: 10px;
-            padding: 3px 0; transition: all 0.2s; cursor: pointer;
-            white-space: nowrap;
-        }}
-        .sf-nav-link:hover {{ color: #60a5fa; padding-left: 6px; }}
-
-        /* ── Contact items ── */
-        .sf-contact-item {{
-            display: flex; align-items: flex-start; gap: 10px;
-            margin-bottom: 14px; font-size: 0.81rem;
-        }}
-        .sf-ci-icon {{
-            width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.95rem; background: rgba(37,99,235,0.12);
-            border: 1px solid rgba(37,99,235,0.20);
-        }}
-        .sf-ci-label {{
-            font-size: 0.63rem; color: {SUB};
-            text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 3px;
-        }}
-        .sf-ci-value {{
-            color: {TEXT}; font-weight: 500; word-break: break-all; line-height: 1.4;
-        }}
-        .sf-ci-value a {{ color: #60a5fa; text-decoration: none; transition: color 0.2s; }}
-        .sf-ci-value a:hover {{ color: #2dd4bf; }}
-
-        .sf-email-copy {{
-            display: inline-flex; align-items: center; gap: 5px;
-            font-size: 0.70rem; color: {SUB}; cursor: pointer;
-            background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.18);
-            padding: 3px 10px; border-radius: 6px; margin-top: 5px;
-            transition: all 0.2s; user-select: none; width: fit-content;
-        }}
-        .sf-email-copy:hover {{ background: rgba(37,99,235,0.18); color: #60a5fa; }}
-
-        /* ── Badges row ── */
-        .sf-badges {{
-            display: flex; flex-wrap: wrap; gap: 8px;
-            padding: 20px 0 4px;
-            border-top: 1px solid rgba(37,99,235,0.10);
-        }}
-        .sf-badge {{
-            display: inline-flex; align-items: center; gap: 5px;
-            background: rgba(37,99,235,0.07); border: 1px solid rgba(37,99,235,0.16);
-            color: {SUB}; font-size: 0.64rem; font-weight: 600;
-            padding: 5px 12px; border-radius: 8px; letter-spacing: 0.4px;
-            transition: all 0.2s; white-space: nowrap; cursor: default;
-        }}
-        .sf-badge:hover {{ background: rgba(37,99,235,0.14); color: #60a5fa; }}
-
-        /* ── Bottom bar ── */
-        .sf-bottom {{
-            display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; gap: 12px; padding: 18px 0 22px;
-        }}
-        .sf-copy {{ font-size: 0.75rem; color: {SUB}; line-height: 1.5; }}
-        .sf-copy strong {{ color: {TEXT}; }}
-        .sf-disclaimer {{ font-size: 0.68rem; color: rgba(239,68,68,0.75); display: flex; align-items: center; gap: 5px; }}
-        .sf-version {{
-            background: rgba(37,99,235,0.10); border: 1px solid rgba(37,99,235,0.22);
-            color: #60a5fa; font-size: 0.62rem; font-weight: 700;
-            padding: 3px 10px; border-radius: 6px; letter-spacing: 1px;
-            font-family: 'Space Mono', monospace; white-space: nowrap;
-        }}
-
-        /* ── Responsive ── */
-        @media (max-width: 1100px) {{
-            .sf-top {{ grid-template-columns: 1.6fr 1fr 1fr; gap: 32px; }}
-            .sf-top > div:last-child {{
-                grid-column: 1 / -1;
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-                gap: 16px;
-            }}
-            .sf-top > div:last-child .sf-col-title {{ grid-column: 1 / -1; }}
-        }}
-        @media (max-width: 768px) {{
-            .sf-outer {{ margin-left: calc(-0.75rem - 1px); margin-right: calc(-0.75rem - 1px); width: calc(100% + 1.5rem + 2px); }}
-            .sf-inner {{ padding: 0 1.25rem; }}
-            .sf-top {{ grid-template-columns: 1fr 1fr; gap: 28px; padding: 2.5rem 0 2rem; }}
-            .sf-top > div:first-child {{ grid-column: 1 / -1; }}
-            .sf-top > div:last-child {{ grid-column: 1 / -1; }}
-            .sf-brand-desc {{ max-width: 100%; }}
-            .sf-bottom {{ flex-direction: column; text-align: center; gap: 10px; padding: 16px 0 20px; }}
-            .sf-badges {{ justify-content: center; }}
-        }}
-        @media (max-width: 480px) {{
-            .sf-top {{ grid-template-columns: 1fr; gap: 22px; padding: 2rem 0 1.5rem; }}
-            .sf-top > div:first-child {{ grid-column: auto; }}
-            .sf-social {{ justify-content: flex-start; }}
-            .sf-tech-stack {{ gap: 5px; }}
-        }}
-        </style>
-
-        <div class="sf-outer">
-        <div class="sf-wrap">
-          <div class="sf-inner">
-
-            <!-- TOP GRID -->
-            <div class="sf-top">
-
-              <!-- Col 1: Brand -->
-              <div>
-                <div class="sf-brand-logo">
-                  <span class="sf-brand-icon">🔬</span>
+              <div class="footer-brand">
+                <div class="footer-brand-logo">
+                  <span class="footer-brand-icon">🔬</span>
                   <div>
-                    <div class="sf-brand-name">SkinScan AI</div>
-                    <div class="sf-brand-tagline">Next-Gen Dermatology Intelligence</div>
+                    <div class="footer-brand-name">SkinScan AI</div>
+                    <div class="footer-brand-tagline">Next-Gen Dermatology Intelligence</div>
                   </div>
                 </div>
-                <p class="sf-brand-desc">
+                <p class="footer-brand-desc">
                   An AI-powered clinical platform for dermoscopic skin lesion analysis.
                   Developed as a Final Year Project at the University of Agriculture Faisalabad
                   using deep learning CNN models for benign/malignant classification.
                 </p>
-                <div class="sf-tech-stack">
-                  <span class="sf-tech-chip">Python</span>
-                  <span class="sf-tech-chip">Streamlit</span>
-                  <span class="sf-tech-chip">TensorFlow</span>
-                  <span class="sf-tech-chip">Plotly</span>
-                  <span class="sf-tech-chip">PIL</span>
-                  <span class="sf-tech-chip">ReportLab</span>
-                  <span class="sf-tech-chip">NumPy</span>
-                  <span class="sf-tech-chip">Pandas</span>
+                <div class="footer-tech-stack">
+                  <span class="ftech-chip">Python</span>
+                  <span class="ftech-chip">Streamlit</span>
+                  <span class="ftech-chip">TensorFlow</span>
+                  <span class="ftech-chip">Plotly</span>
+                  <span class="ftech-chip">PIL</span>
+                  <span class="ftech-chip">ReportLab</span>
+                  <span class="ftech-chip">NumPy</span>
+                  <span class="ftech-chip">Pandas</span>
                 </div>
-                <div class="sf-social">
-                  <a href="https://github.com/rehanshafiq70" target="_blank" class="sf-social-btn github" title="GitHub">
+                <div class="footer-social">
+                  <a href="https://github.com/rehanshafiq70" target="_blank" class="social-btn github" title="GitHub">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" style="color:#c9d1d9;">
                       <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
                     </svg>
                   </a>
-                  <a href="https://www.linkedin.com/in/rehanshafiq70" target="_blank" class="sf-social-btn linkedin" title="LinkedIn">
+                  <a href="https://www.linkedin.com/in/rehanshafiq70" target="_blank" class="social-btn linkedin" title="LinkedIn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#0a66c2;">
                       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                     </svg>
                   </a>
-                  <a href="mailto:rehanshafiq6540@gmail.com" class="sf-social-btn email" title="Email">
+                  <a href="mailto:rehanshafiq6540@gmail.com" class="social-btn email" title="Email">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#14b8a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                       <polyline points="22,6 12,13 2,6"/>
@@ -2544,173 +2163,124 @@ FOOTER_METHOD = '''
                   </a>
                 </div>
               </div>
+        """, unsafe_allow_html=True)
 
-              <!-- Col 2: Platform Links -->
+        # ── Nav columns ───────────────────────────────────────────
+        st.markdown("""
               <div>
-                <div class="sf-col-title">Platform</div>
-                <span class="sf-nav-link">🏠 Home Dashboard</span>
-                <span class="sf-nav-link">📷 AI Scan Lab</span>
-                <span class="sf-nav-link">🧠 AI Analysis</span>
-                <span class="sf-nav-link">📊 Analytics Dashboard</span>
-                <span class="sf-nav-link">📁 Patient History</span>
-                <span class="sf-nav-link">👨‍⚕️ Medical Guide</span>
-                <span class="sf-nav-link">⚙️ Settings</span>
+                <div class="footer-col-title">Platform</div>
+                <span class="footer-nav-link">🏠 Home Dashboard</span>
+                <span class="footer-nav-link">📷 AI Scan Lab</span>
+                <span class="footer-nav-link">🧠 AI Analysis</span>
+                <span class="footer-nav-link">📊 Analytics Dashboard</span>
+                <span class="footer-nav-link">📁 Patient History</span>
+                <span class="footer-nav-link">👨‍⚕️ Medical Guide</span>
+                <span class="footer-nav-link">⚙️ Settings</span>
               </div>
 
-              <!-- Col 3: Features -->
               <div>
-                <div class="sf-col-title">Features</div>
-                <span class="sf-nav-link">🧬 Multi-Class CNN</span>
-                <span class="sf-nav-link">🔥 Grad-CAM Heatmap</span>
-                <span class="sf-nav-link">🤖 AI Explanation</span>
-                <span class="sf-nav-link">📷 Live Camera Scan</span>
-                <span class="sf-nav-link">📄 PDF / CSV Reports</span>
-                <span class="sf-nav-link">🛡️ Blur Detection</span>
-                <span class="sf-nav-link">🌓 Dark / Light Mode</span>
+                <div class="footer-col-title">Features</div>
+                <span class="footer-nav-link">🧬 Multi-Class CNN</span>
+                <span class="footer-nav-link">🔥 Grad-CAM Heatmap</span>
+                <span class="footer-nav-link">🤖 AI Explanation Panel</span>
+                <span class="footer-nav-link">📷 Live Camera Scan</span>
+                <span class="footer-nav-link">📄 PDF / CSV Reports</span>
+                <span class="footer-nav-link">🛡️ Blur Detection</span>
+                <span class="footer-nav-link">🌓 Dark / Light Mode</span>
               </div>
+        """, unsafe_allow_html=True)
 
-              <!-- Col 4: Contact -->
+        # ── Contact column ────────────────────────────────────────
+        st.markdown("""
               <div>
-                <div class="sf-col-title">Developer Contact</div>
+                <div class="footer-col-title">Developer Contact</div>
 
-                <div class="sf-contact-item">
-                  <div class="sf-ci-icon">👨‍💻</div>
+                <div class="footer-contact-item">
+                  <div class="fci-icon">👨‍💻</div>
                   <div>
-                    <div class="sf-ci-label">Developer</div>
-                    <div class="sf-ci-value">Rehan Shafique</div>
+                    <div class="fci-label">Developer</div>
+                    <div class="fci-value">Rehan Shafique</div>
                   </div>
                 </div>
 
-                <div class="sf-contact-item">
-                  <div class="sf-ci-icon">🏫</div>
+                <div class="footer-contact-item">
+                  <div class="fci-icon">🏫</div>
                   <div>
-                    <div class="sf-ci-label">Institution</div>
-                    <div class="sf-ci-value">University of Agriculture Faisalabad</div>
+                    <div class="fci-label">Institution</div>
+                    <div class="fci-value">University of Agriculture Faisalabad</div>
                   </div>
                 </div>
 
-                <div class="sf-contact-item">
-                  <div class="sf-ci-icon">📧</div>
+                <div class="footer-contact-item">
+                  <div class="fci-icon">📧</div>
                   <div>
-                    <div class="sf-ci-label">Email</div>
-                    <div class="sf-ci-value">
+                    <div class="fci-label">Email</div>
+                    <div class="fci-value">
                       <a href="mailto:rehanshafiq6540@gmail.com">rehanshafiq6540@gmail.com</a>
                     </div>
-                    <div class="sf-email-copy"
-                         onclick="navigator.clipboard.writeText('rehanshafiq6540@gmail.com').then(()=>{{this.textContent='✅ Copied!';setTimeout(()=>{{this.textContent='📋 Copy Email'}},2000)}})">
+                    <div class="email-copy-btn"
+                         onclick="navigator.clipboard.writeText('rehanshafiq6540@gmail.com').then(()=>{this.textContent='✅ Copied!';setTimeout(()=>{this.innerHTML='📋 Copy Email'},2000)})">
                       📋 Copy Email
                     </div>
                   </div>
                 </div>
 
-                <div class="sf-contact-item">
-                  <div class="sf-ci-icon">💼</div>
+                <div class="footer-contact-item">
+                  <div class="fci-icon">💼</div>
                   <div>
-                    <div class="sf-ci-label">LinkedIn</div>
-                    <div class="sf-ci-value">
+                    <div class="fci-label">LinkedIn</div>
+                    <div class="fci-value">
                       <a href="https://www.linkedin.com/in/rehanshafiq70" target="_blank">linkedin.com/in/rehanshafiq70</a>
                     </div>
                   </div>
                 </div>
 
-                <div class="sf-contact-item">
-                  <div class="sf-ci-icon">🐙</div>
+                <div class="footer-contact-item">
+                  <div class="fci-icon">🐙</div>
                   <div>
-                    <div class="sf-ci-label">GitHub</div>
-                    <div class="sf-ci-value">
+                    <div class="fci-label">GitHub</div>
+                    <div class="fci-value">
                       <a href="https://github.com/rehanshafiq70" target="_blank">github.com/rehanshafiq70</a>
                     </div>
                   </div>
                 </div>
-
               </div>
-            </div><!-- /sf-top -->
 
-            <!-- BADGES -->
-            <div class="sf-badges">
-              <span class="sf-badge">🔬 CNN Deep Learning</span>
-              <span class="sf-badge">🏥 Clinical Intelligence</span>
-              <span class="sf-badge">🧬 Dermoscopy AI</span>
-              <span class="sf-badge">🎓 Final Year Project 2026</span>
-              <span class="sf-badge">🌐 University of Agriculture Faisalabad</span>
-              <span class="sf-badge">⚡ Streamlit v15.0</span>
-              <span class="sf-badge">🤖 TensorFlow CNN</span>
             </div>
-
-            <!-- BOTTOM BAR -->
-            <div class="sf-bottom">
-              <div class="sf-copy">
-                © 2026 <strong>SkinScan AI</strong> — Developed by <strong>Rehan Shafique</strong>
-                &nbsp;·&nbsp; University of Agriculture Faisalabad &nbsp;·&nbsp; Dept. of Bioinformatics
-              </div>
-              <div class="sf-disclaimer">
-                ⚠️ Research &amp; Educational Use Only — Not a Certified Medical Device
-              </div>
-              <div class="sf-version">v15.0</div>
-            </div>
-
-          </div><!-- /sf-inner -->
-        </div><!-- /sf-wrap -->
-        </div><!-- /sf-outer -->
         """, unsafe_allow_html=True)
-'''
 
+        # ── Badges + bottom bar ───────────────────────────────────
+        st.markdown("""
+            <div class="footer-badges">
+              <span class="fbadge">🔬 CNN Deep Learning</span>
+              <span class="fbadge">🏥 Clinical Intelligence</span>
+              <span class="fbadge">🧬 Dermoscopy AI</span>
+              <span class="fbadge">🎓 Final Year Project 2026</span>
+              <span class="fbadge">🌐 University of Agriculture Faisalabad</span>
+              <span class="fbadge">⚡ Streamlit v15.0</span>
+              <span class="fbadge">🤖 TensorFlow CNN</span>
+            </div>
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  ALSO: Remove the inject_css() footer-related classes to avoid conflicts
-#  (Optional but keeps CSS clean — search for and delete these class defs
-#   from inject_css() in your file):
-#
-#  Classes now ONLY in footer (can remove from inject_css to avoid duplication):
-#    .footer-outer, .site-footer, .footer-inner, .footer-top, .footer-brand-logo,
-#    .footer-brand-icon, .footer-brand-name, .footer-brand-tagline, .footer-brand-desc,
-#    .footer-tech-stack, .ftech-chip, .footer-social, .social-btn,
-#    .footer-col-title, .footer-nav-link, .footer-contact-item, .fci-icon,
-#    .fci-label, .fci-value, .email-copy-btn, .footer-badges, .fbadge,
-#    .footer-bottom, .footer-copy, .footer-disclaimer, .footer-version-badge
-#
-#  Keeping them in inject_css() too won't break anything (just redundant).
-# ══════════════════════════════════════════════════════════════════════════════
+            <div class="footer-bottom">
+              <div class="footer-copy">
+                &copy; 2026 <strong>SkinScan AI</strong> &mdash; Developed by <strong>Rehan Shafique</strong>
+                &nbsp;&middot;&nbsp; University of Agriculture Faisalabad &nbsp;&middot;&nbsp; Department of Bioinformatics
+              </div>
+              <div class="footer-disclaimer">
+                &#9888;&#65039; Research &amp; Educational Use Only &mdash; Not a Certified Medical Device
+              </div>
+              <div class="footer-version-badge">v15.0</div>
+            </div>
 
-if __name__ == "__main__":
-    print("=" * 70)
-    print("  SKINSCAN AI — FOOTER FIX  v15.1")
-    print("=" * 70)
-    print()
-    print("ROOT CAUSE OF BUG:")
-    print("  The footer's CSS classes were defined in inject_css() via a")
-    print("  separate st.markdown() call. Streamlit processes each markdown")
-    print("  block independently. When the footer HTML was rendered, the")
-    print("  browser sometimes hadn't applied the stylesheet yet, causing")
-    print("  all CSS classes to be unrecognized — so the HTML rendered as")
-    print("  raw visible text.")
-    print()
-    print("FIX APPLIED:")
-    print("  The new _footer() method embeds a <style> block INSIDE the same")
-    print("  st.markdown() call as the footer HTML. This guarantees CSS and")
-    print("  HTML are always delivered together in one atomic browser update.")
-    print()
-    print("HOW TO APPLY:")
-    print("  1. Open your app.py / skinscan.py")
-    print("  2. Find the _footer() method inside class SkinScanApp")
-    print("  3. Replace the entire method with the FOOTER_METHOD string above")
-    print("  4. Run: streamlit run app.py")
-    print()
-    print("CHANGES SUMMARY:")
-    print("  - All CSS class names renamed from 'footer-*' → 'sf-*'")
-    print("    (avoids collision with inject_css() styles)")
-    print("  - <style> block embedded directly inside _footer()'s markdown")
-    print("  - Theme-aware colors computed dynamically from session_state")
-    print("  - All hover, animation, responsive breakpoints preserved")
-    print("  - Social links, contact, tech chips fully functional")
-    print("  - Email copy-to-clipboard button preserved")
-    print()
-    print("  ✅ Footer will now always render correctly on all pages.")
-    print("=" * 70)
+          </div>
+        </div>
+        </div>
+        """, unsafe_allow_html=True)
+
 
 # ══════════════════════════════════════════════════════════════════
 #  ENTRY POINT
 # ══════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
     app = SkinScanApp()
-   # app.launch()
+    app.launch()
