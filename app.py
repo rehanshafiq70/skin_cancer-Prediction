@@ -2251,7 +2251,7 @@ class SkinScanApp:
                     st.markdown(f'<div class="step-box">{pt}</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-   """
+   
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║  SKINSCAN AI  ·  FOOTER FIX  ·  v15.1                                       ║
 ║  ROOT CAUSE: Footer HTML was rendering as raw text because:                  ║
