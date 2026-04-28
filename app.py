@@ -2252,27 +2252,8 @@ class SkinScanApp:
         st.markdown('</div>', unsafe_allow_html=True)
 
    
-╔══════════════════════════════════════════════════════════════════════════════╗
-║  SKINSCAN AI  ·  FOOTER FIX  ·  v15.1                                       ║
-║  ROOT CAUSE: Footer HTML was rendering as raw text because:                  ║
-║    1. Streamlit's st.markdown() with unsafe_allow_html=True can fail         ║
-║       when called inside certain layout contexts (columns, expanders, etc.)  ║
-║    2. CSS classes in inject_css() are injected once at page load —           ║
-║       if the footer renders before CSS is parsed, classes are unknown.       ║
-║                                                                               ║
-║  FIX: Make _footer() completely self-contained — ALL CSS is embedded         ║
-║  directly inside the footer HTML block via a <style> tag. This guarantees   ║
-║  the footer always renders correctly regardless of page state.               ║
-╚══════════════════════════════════════════════════════════════════════════════╝
 
-INSTRUCTIONS:
-  1. Open your main app file (e.g. app.py / skinscan.py)
-  2. Find the _footer() method inside SkinScanApp class
-  3. REPLACE the entire _footer() method with the one below
-  4. Save and re-run: streamlit run app.py
 
-No other changes needed. The fix is 100% backward-compatible.
-"""
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  PASTE THIS METHOD TO REPLACE _footer() IN YOUR SkinScanApp CLASS
