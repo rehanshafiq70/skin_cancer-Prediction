@@ -1,10 +1,10 @@
 """
-╔══════════════════════════════════════════════════════════════════╗
-║   SKINSCAN AI  ·  CLINICAL INTELLIGENCE PLATFORM  ·  v13.0     ║
-║   Design: Apex Medical AI  ·  Glassmorphism Clinical UI         ║
-║   Author: Rehan Shafique  ·  FYP Final Build                    ║
-║   Model: skin_cancer_cnn.h5  (Benign / Malignant)               ║
-╚══════════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════════╗
+║  SKINSCAN AI  ·  CLINICAL INTELLIGENCE PLATFORM  ·  v14.0           ║
+║  Design  : Apex Medical · Horizontal Navbar · Camera Integration     ║
+║  Author  : Rehan Shafique  ·  Final Year Project                     ║
+║  Model   : skin_cancer_cnn.h5  (Benign / Malignant)                 ║
+╚══════════════════════════════════════════════════════════════════════╝
 """
 
 import streamlit as st
@@ -14,12 +14,11 @@ from PIL import Image, ImageEnhance
 import plotly.graph_objects as go
 import plotly.express as px
 from streamlit_option_menu import option_menu
-import random, time, datetime, io, json, base64
+import random, time, datetime, io, json
 
-# ── ReportLab (optional) ──────────────────────────────────────────
 try:
     from reportlab.lib.pagesizes import A4
-    from reportlab.lib import colors
+    from reportlab.lib import colors as rl_colors
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm
     from reportlab.platypus import (
@@ -33,128 +32,219 @@ except ImportError:
 
 
 # ══════════════════════════════════════════════════════════════════
-#  GLOBAL CSS  ──  Apex Medical Intelligence Design System
+#  GLOBAL STYLES  ──  v14  "Clinical Apex" Design System
 # ══════════════════════════════════════════════════════════════════
-def inject_premium_css(theme: str = "dark"):
-    if theme == "dark":
-        BG         = "#020c1b"
-        BG2        = "#041226"
-        SURFACE    = "rgba(4,22,50,0.80)"
-        SURFACE2   = "rgba(8,30,65,0.70)"
-        BORDER     = "rgba(37,99,235,0.25)"
-        BORDER_H   = "rgba(20,184,166,0.55)"
-        TEXT       = "#e8f4f8"
-        SUBTEXT    = "#7fa3c0"
-        MUTED      = "#3d5a73"
-        SIDEBAR_BG = "rgba(2,12,27,0.97)"
-        INPUT_BG   = "rgba(4,22,50,0.90)"
-        DIVIDER    = "rgba(37,99,235,0.15)"
+def inject_css(theme: str = "dark"):
+    dark = theme == "dark"
+
+    # ── Token map ────────────────────────────────────────────────
+    if dark:
+        BG        = "#020d1e"
+        BG2       = "#041226"
+        SURF      = "rgba(4,22,50,0.78)"
+        SURF2     = "rgba(6,28,60,0.65)"
+        BORDER    = "rgba(37,99,235,0.22)"
+        BDH       = "rgba(20,184,166,0.50)"
+        TEXT      = "#dff0fa"
+        SUB       = "#6b9ab8"
+        MUTED     = "#2a4a62"
+        NAV_BG    = "rgba(2,13,30,0.88)"
+        INP       = "rgba(4,22,50,0.92)"
+        DIV       = "rgba(37,99,235,0.13)"
+        HERO_G1   = "rgba(37,99,235,0.18)"
+        HERO_G2   = "rgba(20,184,166,0.10)"
     else:
-        BG         = "#f0f5fb"
-        BG2        = "#e4edf7"
-        SURFACE    = "rgba(255,255,255,0.92)"
-        SURFACE2   = "rgba(240,248,255,0.88)"
-        BORDER     = "rgba(37,99,235,0.20)"
-        BORDER_H   = "rgba(20,184,166,0.50)"
-        TEXT       = "#0d1f35"
-        SUBTEXT    = "#3d6080"
-        MUTED      = "#8eb0cc"
-        SIDEBAR_BG = "rgba(240,245,251,0.98)"
-        INPUT_BG   = "rgba(255,255,255,0.95)"
-        DIVIDER    = "rgba(37,99,235,0.12)"
+        BG        = "#f0f5fc"
+        BG2       = "#e6eef9"
+        SURF      = "rgba(255,255,255,0.93)"
+        SURF2     = "rgba(240,247,255,0.90)"
+        BORDER    = "rgba(37,99,235,0.18)"
+        BDH       = "rgba(20,184,166,0.45)"
+        TEXT      = "#0c1e32"
+        SUB       = "#3a6080"
+        MUTED     = "#a8c4d8"
+        NAV_BG    = "rgba(248,252,255,0.95)"
+        INP       = "rgba(255,255,255,0.97)"
+        DIV       = "rgba(37,99,235,0.10)"
+        HERO_G1   = "rgba(37,99,235,0.08)"
+        HERO_G2   = "rgba(20,184,166,0.06)"
 
     st.markdown(f"""
     <style>
-    /* ══════════════════════════════════════════
-       FONTS — Sora (medical precision) + JetBrains Mono
-    ══════════════════════════════════════════ */
-    @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    /* ─────────────────────────────────────────────────────────────
+       FONTS  ·  Outfit (body) + Oxanium (display/mono data)
+    ───────────────────────────────────────────────────────────── */
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Oxanium:wght@400;600;700;800&display=swap');
 
-    /* ══════════════════════════════════════════
-       APP SHELL
-    ══════════════════════════════════════════ */
-    html, body, .stApp {{
-        font-family: 'Sora', sans-serif !important;
+    /* ─────────────────────────────────────────────────────────────
+       RESET & SHELL
+    ───────────────────────────────────────────────────────────── */
+    *, *::before, *::after {{ box-sizing: border-box; }}
+
+    html, body {{ font-family: 'Outfit', sans-serif !important; }}
+
+    .stApp {{
+        font-family: 'Outfit', sans-serif !important;
         background-color: {BG} !important;
+        background-image:
+            radial-gradient(ellipse 90% 45% at 8%   2%,  {HERO_G1} 0%, transparent 65%),
+            radial-gradient(ellipse 70% 50% at 92%  98%, {HERO_G2} 0%, transparent 60%),
+            url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%232563eb' fill-opacity='0.025'%3E%3Ccircle cx='1' cy='1' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        background-attachment: fixed;
         color: {TEXT} !important;
     }}
-    .stApp {{
-        background-image:
-            radial-gradient(ellipse 80% 50% at 10% 0%,   rgba(37,99,235,0.12)  0%, transparent 60%),
-            radial-gradient(ellipse 60% 40% at 90% 100%, rgba(20,184,166,0.09) 0%, transparent 55%),
-            radial-gradient(ellipse 50% 60% at 50% 50%,  rgba(139,92,246,0.04) 0%, transparent 70%),
-            url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232563eb' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        background-attachment: fixed;
+
+    /* ─────────────────────────────────────────────────────────────
+       HIDE DEFAULT STREAMLIT CHROME
+    ───────────────────────────────────────────────────────────── */
+    #MainMenu, header[data-testid="stHeader"], footer {{ display: none !important; }}
+    [data-testid="stSidebar"] {{ display: none !important; }}
+    .stDeployButton {{ display: none !important; }}
+    .stDecoration {{ display: none !important; }}
+    [data-testid="collapsedControl"] {{ display: none !important; }}
+
+    /* ─────────────────────────────────────────────────────────────
+       MAIN CONTAINER  (top padding for fixed navbar)
+    ───────────────────────────────────────────────────────────── */
+    .block-container {{
+        padding-top: 82px !important;
+        padding-left: 2rem  !important;
+        padding-right: 2rem !important;
+        max-width: 1320px !important;
+        margin: 0 auto !important;
+    }}
+    @media (max-width: 768px) {{
+        .block-container {{
+            padding-top: 72px !important;
+            padding-left: 1rem  !important;
+            padding-right: 1rem !important;
+        }}
     }}
 
-    /* ══════════════════════════════════════════
-       SIDEBAR
-    ══════════════════════════════════════════ */
-    [data-testid="stSidebar"] {{
-        background: {SIDEBAR_BG} !important;
-        border-right: 1px solid {BORDER} !important;
-        backdrop-filter: blur(20px) saturate(180%) !important;
+    /* ─────────────────────────────────────────────────────────────
+       TOP NAVBAR WRAPPER  (glassmorphism fixed bar)
+    ───────────────────────────────────────────────────────────── */
+    .navbar-shell {{
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 9999;
+        background: {NAV_BG};
+        backdrop-filter: blur(22px) saturate(180%);
+        -webkit-backdrop-filter: blur(22px) saturate(180%);
+        border-bottom: 1px solid {BORDER};
+        padding: 0 28px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.12);
     }}
-    [data-testid="stSidebar"] * {{ color: {TEXT} !important; }}
-    [data-testid="stSidebar"] .stMarkdown p {{ color: {SUBTEXT} !important; }}
 
-    /* Sidebar brand logo */
-    .sb-brand {{
-        text-align: center;
-        padding: 20px 8px 12px;
-        position: relative;
+    /* Logo section inside navbar */
+    .nav-logo {{
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+        text-decoration: none;
     }}
-    .sb-icon {{
-        font-size: 2.8rem;
-        display: block;
-        margin-bottom: 6px;
-        animation: pulse-icon 3s ease-in-out infinite;
+    .nav-logo-icon {{
+        font-size: 1.55rem;
+        animation: logo-pulse 3s ease-in-out infinite;
+        line-height: 1;
     }}
-    @keyframes pulse-icon {{
-        0%, 100% {{ filter: drop-shadow(0 0 6px rgba(37,99,235,0.5)); }}
-        50%       {{ filter: drop-shadow(0 0 16px rgba(20,184,166,0.7)); }}
+    @keyframes logo-pulse {{
+        0%,100% {{ filter: drop-shadow(0 0 5px rgba(37,99,235,0.6));  }}
+        50%      {{ filter: drop-shadow(0 0 14px rgba(20,184,166,0.7)); }}
     }}
-    .sb-title {{
-        font-family: 'Sora', sans-serif;
+    .nav-logo-text {{
+        font-family: 'Oxanium', sans-serif;
         font-size: 1.05rem;
         font-weight: 800;
-        background: linear-gradient(135deg, #2563eb 0%, #14b8a6 50%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #3b82f6 0%, #14b8a6 55%, #8b5cf6 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        letter-spacing: 0.3px;
+        letter-spacing: 0.2px;
+        line-height: 1.1;
     }}
-    .sb-sub {{
-        font-size: 0.60rem;
-        color: {MUTED} !important;
-        letter-spacing: 2.5px;
+    .nav-logo-ver {{
+        font-size: 0.58rem;
+        color: {SUB};
+        letter-spacing: 2px;
         text-transform: uppercase;
-        margin-top: 3px;
+        font-weight: 500;
     }}
 
-    /* Sidebar status panel */
-    .sb-status {{
-        background: {SURFACE2};
-        border: 1px solid {BORDER};
-        border-radius: 12px;
-        padding: 12px 14px;
-        margin: 6px 0;
-        font-size: 0.76rem;
-        line-height: 2.1;
+    /* AI badge in navbar */
+    .nav-ai-badge {{
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: linear-gradient(135deg, rgba(37,99,235,0.15), rgba(20,184,166,0.10));
+        border: 1px solid rgba(37,99,235,0.30);
+        padding: 3px 11px;
+        border-radius: 99px;
+        font-size: 0.63rem;
+        font-weight: 700;
+        color: #60a5fa;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        flex-shrink: 0;
     }}
-    .status-online  {{ color: #10b981 !important; font-weight: 600 !important; }}
-    .status-offline {{ color: #f59e0b !important; font-weight: 600 !important; }}
 
-    /* ══════════════════════════════════════════
-       MAIN CONTENT HEADER BANNER
-    ══════════════════════════════════════════ */
+    /* ─────────────────────────────────────────────────────────────
+       HORIZONTAL OPTION MENU — styled as navbar items
+    ───────────────────────────────────────────────────────────── */
+    /* The option_menu sits inside .nav-menu-center */
+    .nav-menu-center ul {{
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 2px !important;
+        list-style: none !important;
+        margin: 0 !important;
+        padding: 4px !important;
+        background: {SURF2} !important;
+        border: 1px solid {BORDER} !important;
+        border-radius: 12px !important;
+    }}
+    .nav-menu-center ul li a {{
+        font-family: 'Outfit', sans-serif !important;
+        font-size: 0.82rem !important;
+        font-weight: 500 !important;
+        padding: 7px 15px !important;
+        border-radius: 9px !important;
+        color: {SUB} !important;
+        transition: all 0.2s ease !important;
+        white-space: nowrap !important;
+    }}
+    .nav-menu-center ul li a:hover {{
+        color: {TEXT} !important;
+        background: rgba(37,99,235,0.10) !important;
+    }}
+    .nav-menu-center ul li a[aria-selected="true"] {{
+        background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        box-shadow: 0 3px 12px rgba(37,99,235,0.40) !important;
+    }}
+
+    /* Streamlit doesn't render option_menu nav-link icon well in horizontal - override */
+    .nav-menu-center .nav-link {{
+        padding: 7px 14px !important;
+    }}
+    .nav-menu-center .nav-link .icon {{ font-size:0.85rem !important; margin-right:5px !important; }}
+
+    /* ─────────────────────────────────────────────────────────────
+       PAGE BANNER  (hero intro per page)
+    ───────────────────────────────────────────────────────────── */
     .page-banner {{
         background: linear-gradient(135deg,
-            rgba(37,99,235,0.15) 0%,
-            rgba(20,184,166,0.10) 50%,
-            rgba(139,92,246,0.08) 100%);
+            rgba(37,99,235,0.14) 0%,
+            rgba(20,184,166,0.08) 50%,
+            rgba(139,92,246,0.06) 100%);
         border: 1px solid {BORDER};
-        border-radius: 20px;
-        padding: 28px 32px 22px;
+        border-radius: 22px;
+        padding: 30px 36px 24px;
         margin-bottom: 28px;
         position: relative;
         overflow: hidden;
@@ -162,136 +252,214 @@ def inject_premium_css(theme: str = "dark"):
     .page-banner::before {{
         content: '';
         position: absolute;
-        top: -1px; left: -1px; right: -1px; bottom: -1px;
-        border-radius: 20px;
-        background: linear-gradient(135deg, rgba(37,99,235,0.4), rgba(20,184,166,0.3), rgba(139,92,246,0.2));
-        z-index: -1;
-        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        mask-composite: exclude;
-        padding: 1px;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg,
+            transparent, #2563eb 25%, #14b8a6 50%, #8b5cf6 75%, transparent);
+    }}
+    .page-banner::after {{
+        content: '';
+        position: absolute;
+        bottom: -60px; right: -60px;
+        width: 180px; height: 180px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(20,184,166,0.12) 0%, transparent 70%);
+    }}
+    .banner-chip {{
+        display: inline-block;
+        background: rgba(37,99,235,0.14);
+        border: 1px solid rgba(37,99,235,0.30);
+        color: #60a5fa;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 3px 12px;
+        border-radius: 99px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
     }}
     .banner-title {{
-        font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+        font-family: 'Oxanium', sans-serif;
+        font-size: clamp(1.7rem, 3.5vw, 2.5rem);
         font-weight: 800;
         background: linear-gradient(135deg, #60a5fa 0%, #14b8a6 45%, #a78bfa 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         letter-spacing: -0.5px;
-        margin: 0;
+        margin: 0 0 8px;
         line-height: 1.2;
     }}
     .banner-sub {{
-        font-size: 0.85rem;
-        color: {SUBTEXT};
-        margin-top: 6px;
-        letter-spacing: 0.3px;
-    }}
-    .banner-badge {{
-        display: inline-block;
-        background: rgba(37,99,235,0.15);
-        border: 1px solid rgba(37,99,235,0.35);
-        color: #60a5fa;
-        font-size: 0.68rem;
-        font-weight: 600;
-        padding: 3px 10px;
-        border-radius: 99px;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        margin-bottom: 8px;
+        font-size: 0.88rem;
+        color: {SUB};
+        max-width: 640px;
+        line-height: 1.6;
     }}
 
-    /* ══════════════════════════════════════════
-       GLASSMORPHISM CARDS
-    ══════════════════════════════════════════ */
+    /* ─────────────────────────────────────────────────────────────
+       HERO SECTION  (Home page)
+    ───────────────────────────────────────────────────────────── */
+    .hero-section {{
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 48px 40px;
+        background: linear-gradient(135deg,
+            rgba(37,99,235,0.12) 0%,
+            rgba(20,184,166,0.08) 40%,
+            rgba(139,92,246,0.06) 100%);
+        border: 1px solid {BORDER};
+        border-radius: 24px;
+        margin-bottom: 32px;
+        position: relative;
+        overflow: hidden;
+    }}
+    .hero-section::before {{
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #2563eb 0%, #14b8a6 50%, #8b5cf6 100%);
+    }}
+    .hero-section::after {{
+        content: '⬡';
+        position: absolute;
+        right: 40px; top: 50%;
+        transform: translateY(-50%);
+        font-size: 9rem;
+        opacity: 0.04;
+        color: #2563eb;
+        pointer-events: none;
+    }}
+    .hero-title {{
+        font-family: 'Oxanium', sans-serif;
+        font-size: clamp(2rem, 5vw, 3.2rem);
+        font-weight: 800;
+        background: linear-gradient(135deg, #60a5fa 0%, #14b8a6 40%, #a78bfa 85%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -1px;
+        margin: 0 0 12px;
+        line-height: 1.15;
+    }}
+    .hero-subtitle {{
+        font-size: 1.0rem;
+        color: {SUB};
+        max-width: 560px;
+        line-height: 1.65;
+        margin-bottom: 28px;
+    }}
+    .hero-badges {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+    }}
+    .hbadge {{
+        padding: 5px 14px;
+        border-radius: 99px;
+        font-size: 0.76rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }}
+    .hbadge-blue   {{ background:rgba(37,99,235,0.14); color:#60a5fa; border:1px solid rgba(37,99,235,0.30); }}
+    .hbadge-teal   {{ background:rgba(20,184,166,0.12); color:#2dd4bf; border:1px solid rgba(20,184,166,0.28); }}
+    .hbadge-purple {{ background:rgba(139,92,246,0.12); color:#a78bfa; border:1px solid rgba(139,92,246,0.28); }}
+    .hbadge-green  {{ background:rgba(16,185,129,0.12); color:#34d399; border:1px solid rgba(16,185,129,0.28); }}
+
+    /* Feature cards on Home */
+    .feat-card {{
+        background: {SURF};
+        border: 1px solid {BORDER};
+        border-radius: 18px;
+        padding: 24px 20px;
+        text-align: center;
+        backdrop-filter: blur(14px);
+        transition: all 0.30s cubic-bezier(.34,1.56,.64,1);
+        height: 100%;
+    }}
+    .feat-card:hover {{
+        transform: translateY(-8px) scale(1.02);
+        border-color: {BDH};
+        box-shadow: 0 20px 50px rgba(37,99,235,0.16);
+    }}
+    .feat-icon  {{ font-size: 2.4rem; margin-bottom: 14px; display:block; }}
+    .feat-title {{ font-weight: 700; font-size: 0.96rem; margin-bottom: 8px; }}
+    .feat-desc  {{ font-size: 0.80rem; color: {SUB}; line-height: 1.55; }}
+
+    /* ─────────────────────────────────────────────────────────────
+       GLASS CARDS  (general use)
+    ───────────────────────────────────────────────────────────── */
     .glass-card {{
-        background: {SURFACE};
+        background: {SURF};
         border: 1px solid {BORDER};
         border-radius: 20px;
         padding: 24px;
         margin-bottom: 20px;
-        backdrop-filter: blur(16px) saturate(160%);
+        backdrop-filter: blur(16px) saturate(150%);
+        transition: transform 0.28s cubic-bezier(.34,1.56,.64,1),
+                    box-shadow 0.28s ease,
+                    border-color 0.28s ease;
         position: relative;
         overflow: hidden;
-        transition: transform 0.30s cubic-bezier(.34,1.56,.64,1),
-                    box-shadow 0.30s ease,
-                    border-color 0.30s ease;
-    }}
-    .glass-card:hover {{
-        transform: translateY(-5px);
-        box-shadow: 0 20px 50px rgba(37,99,235,0.18),
-                    0 0 0 1px rgba(20,184,166,0.20);
-        border-color: {BORDER_H};
     }}
     .glass-card::after {{
         content: '';
         position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 2px;
-        background: linear-gradient(90deg,
-            transparent 0%,
-            rgba(37,99,235,0.6) 30%,
-            rgba(20,184,166,0.6) 70%,
-            transparent 100%);
+        top: 0; left: 0; width: 100%; height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(37,99,235,0.55), rgba(20,184,166,0.55), transparent);
         opacity: 0;
         transition: opacity 0.3s;
     }}
+    .glass-card:hover {{
+        transform: translateY(-4px);
+        box-shadow: 0 18px 48px rgba(37,99,235,0.14);
+        border-color: {BDH};
+    }}
     .glass-card:hover::after {{ opacity: 1; }}
 
-    /* ══════════════════════════════════════════
-       KPI METRIC CARDS
-    ══════════════════════════════════════════ */
+    /* ─────────────────────────────────────────────────────────────
+       KPI CARDS
+    ───────────────────────────────────────────────────────────── */
     .kpi-card {{
-        background: {SURFACE};
+        background: {SURF};
         border: 1px solid {BORDER};
         border-radius: 18px;
-        padding: 22px 18px 18px;
+        padding: 20px 16px 16px;
         text-align: center;
         backdrop-filter: blur(14px);
-        transition: all 0.30s cubic-bezier(.34,1.56,.64,1);
+        transition: all 0.28s cubic-bezier(.34,1.56,.64,1);
         position: relative;
         overflow: hidden;
     }}
     .kpi-card:hover {{
-        transform: translateY(-6px) scale(1.02);
-        box-shadow: 0 18px 44px rgba(37,99,235,0.20);
-        border-color: {BORDER_H};
+        transform: translateY(-6px) scale(1.025);
+        box-shadow: 0 16px 42px rgba(37,99,235,0.16);
+        border-color: {BDH};
     }}
     .kpi-glow {{
         position: absolute;
-        width: 80px; height: 80px;
+        width: 90px; height: 90px;
         border-radius: 50%;
-        filter: blur(30px);
-        opacity: 0.25;
-        top: -10px; right: -10px;
+        filter: blur(35px);
+        opacity: 0.22;
+        top: -15px; right: -15px;
+        pointer-events: none;
     }}
-    .kpi-icon {{
-        font-size: 1.6rem;
-        margin-bottom: 8px;
-        display: block;
-    }}
-    .kpi-label {{
-        font-size: 0.68rem;
-        color: {SUBTEXT};
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        font-weight: 500;
-        margin-bottom: 8px;
-    }}
-    .kpi-value {{
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: {TEXT};
-        line-height: 1;
-        margin-bottom: 6px;
-    }}
-    .kpi-delta-pos {{ font-size:0.73rem; color:#10b981; font-weight:500; }}
-    .kpi-delta-neg {{ font-size:0.73rem; color:#ef4444; font-weight:500; }}
-    .kpi-delta-neu {{ font-size:0.73rem; color:{SUBTEXT}; }}
+    .kpi-icon  {{ font-size:1.5rem; margin-bottom:8px; display:block; }}
+    .kpi-label {{ font-size:0.68rem; color:{SUB}; text-transform:uppercase; letter-spacing:2px; font-weight:500; margin-bottom:7px; }}
+    .kpi-value {{ font-family:'Oxanium',monospace; font-size:2.0rem; font-weight:700; color:{TEXT}; line-height:1; margin-bottom:5px; }}
+    .kd-pos    {{ font-size:0.72rem; color:#34d399; font-weight:500; }}
+    .kd-neg    {{ font-size:0.72rem; color:#f87171; font-weight:500; }}
+    .kd-neu    {{ font-size:0.72rem; color:{SUB}; }}
 
-    /* ══════════════════════════════════════════
-       SECTION HEADINGS
-    ══════════════════════════════════════════ */
+    /* ─────────────────────────────────────────────────────────────
+       SECTION HEADING
+    ───────────────────────────────────────────────────────────── */
     .sec-head {{
         font-size: 1.0rem;
         font-weight: 700;
@@ -299,326 +467,348 @@ def inject_premium_css(theme: str = "dark"):
         margin-bottom: 14px;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 9px;
     }}
     .sec-head span {{
-        display: inline-block;
-        width: 3px; height: 18px;
-        background: linear-gradient(180deg, #2563eb, #14b8a6);
-        border-radius: 3px;
+        display:inline-block;
+        width:3px; height:18px;
+        background: linear-gradient(180deg,#2563eb,#14b8a6);
+        border-radius:3px;
     }}
 
-    /* ══════════════════════════════════════════
-       UPLOAD ZONE
-    ══════════════════════════════════════════ */
+    /* ─────────────────────────────────────────────────────────────
+       INPUT MODE TOGGLE  (Upload / Camera)
+    ───────────────────────────────────────────────────────────── */
+    .mode-toggle-wrap {{
+        display: flex;
+        gap: 8px;
+        margin-bottom: 18px;
+    }}
+    .mode-btn {{
+        flex: 1;
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.83rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.22s ease;
+        border: 1px solid;
+    }}
+    .mode-btn-active {{
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        border-color: transparent;
+        color: white;
+        box-shadow: 0 4px 14px rgba(37,99,235,0.40);
+    }}
+    .mode-btn-inactive {{
+        background: {SURF2};
+        border-color: {BORDER};
+        color: {SUB};
+    }}
+
+    /* ─────────────────────────────────────────────────────────────
+       FILE UPLOADER
+    ───────────────────────────────────────────────────────────── */
     [data-testid="stFileUploader"] {{
-        border: 2px dashed rgba(37,99,235,0.35) !important;
+        border: 2px dashed rgba(37,99,235,0.32) !important;
         border-radius: 16px !important;
-        background: {SURFACE2} !important;
-        padding: 8px !important;
-        transition: border-color 0.3s, background 0.3s;
+        background: {SURF2} !important;
+        transition: border-color 0.25s, background 0.25s;
     }}
     [data-testid="stFileUploader"]:hover {{
-        border-color: rgba(20,184,166,0.6) !important;
-        background: rgba(20,184,166,0.05) !important;
+        border-color: rgba(20,184,166,0.55) !important;
+        background: rgba(20,184,166,0.04) !important;
     }}
 
-    /* ══════════════════════════════════════════
-       BUTTONS
-    ══════════════════════════════════════════ */
+    /* Camera input */
+    [data-testid="stCameraInput"] {{
+        border-radius: 16px !important;
+        overflow: hidden;
+    }}
+    [data-testid="stCameraInput"] video {{
+        border-radius: 14px !important;
+    }}
+
+    /* ─────────────────────────────────────────────────────────────
+       SCAN BUTTON  (animated glow)
+    ───────────────────────────────────────────────────────────── */
     .stButton > button {{
-        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #1d4ed8 100%) !important;
+        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 40%, #0891b2 100%) !important;
         background-size: 200% auto !important;
         color: white !important;
         border: none !important;
         border-radius: 12px !important;
-        font-family: 'Sora', sans-serif !important;
+        font-family: 'Outfit', sans-serif !important;
         font-weight: 600 !important;
         font-size: 0.88rem !important;
         letter-spacing: 0.4px !important;
-        padding: 0.7rem 1.6rem !important;
+        padding: 0.70rem 1.6rem !important;
         width: 100% !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 4px 15px rgba(37,99,235,0.30) !important;
-        position: relative;
-        overflow: hidden;
+        transition: all 0.30s ease !important;
+        box-shadow: 0 4px 16px rgba(37,99,235,0.30) !important;
     }}
     .stButton > button:hover {{
         background-position: right center !important;
         transform: translateY(-3px) !important;
-        box-shadow: 0 8px 28px rgba(37,99,235,0.50),
-                    0 0 0 1px rgba(20,184,166,0.3) !important;
+        box-shadow: 0 10px 30px rgba(37,99,235,0.50), 0 0 0 1px rgba(20,184,166,0.28) !important;
     }}
-    .stButton > button:active {{ transform: translateY(-1px) !important; }}
 
-    /* Download buttons — teal */
+    .scan-btn-wrap .stButton > button {{
+        background: linear-gradient(135deg, #7c3aed 0%, #2563eb 45%, #0891b2 100%) !important;
+        background-size: 200% auto !important;
+        font-size: 0.94rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 1px !important;
+        text-transform: uppercase !important;
+        padding: 0.82rem !important;
+        animation: scan-idle 3s ease-in-out infinite;
+    }}
+    .scan-btn-wrap .stButton > button:hover {{
+        animation: none;
+        box-shadow: 0 0 44px rgba(139,92,246,0.60), 0 8px 30px rgba(37,99,235,0.50) !important;
+    }}
+    @keyframes scan-idle {{
+        0%,100% {{ box-shadow: 0 0 18px rgba(139,92,246,0.32), 0 4px 15px rgba(37,99,235,0.24); }}
+        50%      {{ box-shadow: 0 0 32px rgba(20,184,166,0.42), 0 6px 20px rgba(37,99,235,0.34); }}
+    }}
+
     .stDownloadButton > button {{
         background: linear-gradient(135deg, #0d9488, #14b8a6) !important;
         color: white !important;
         border-radius: 12px !important;
         font-weight: 600 !important;
         border: none !important;
-        box-shadow: 0 4px 15px rgba(20,184,166,0.30) !important;
+        box-shadow: 0 4px 15px rgba(20,184,166,0.28) !important;
     }}
     .stDownloadButton > button:hover {{
         transform: translateY(-3px) !important;
-        box-shadow: 0 8px 28px rgba(20,184,166,0.50) !important;
+        box-shadow: 0 10px 28px rgba(20,184,166,0.50) !important;
     }}
 
-    /* ══════════════════════════════════════════
-       SCAN BUTTON — special pulsing glow
-    ══════════════════════════════════════════ */
-    .scan-btn-wrap .stButton > button {{
-        background: linear-gradient(135deg, #7c3aed 0%, #2563eb 50%, #0891b2 100%) !important;
-        background-size: 200% auto !important;
-        font-size: 0.95rem !important;
-        letter-spacing: 1.2px !important;
-        text-transform: uppercase !important;
-        padding: 0.85rem !important;
-        box-shadow: 0 0 20px rgba(139,92,246,0.40), 0 4px 15px rgba(37,99,235,0.30) !important;
-        animation: scan-btn-idle 3s ease-in-out infinite;
+    /* ─────────────────────────────────────────────────────────────
+       PROGRESS BAR  (scan progress)
+    ───────────────────────────────────────────────────────────── */
+    .stProgress > div > div > div > div {{
+        background: linear-gradient(90deg, #2563eb, #14b8a6, #8b5cf6) !important;
+        border-radius: 99px !important;
     }}
-    .scan-btn-wrap .stButton > button:hover {{
-        background-position: right center !important;
-        box-shadow: 0 0 40px rgba(139,92,246,0.60), 0 8px 30px rgba(37,99,235,0.50) !important;
-        animation: none;
-    }}
-    @keyframes scan-btn-idle {{
-        0%, 100% {{ box-shadow: 0 0 20px rgba(139,92,246,0.35), 0 4px 15px rgba(37,99,235,0.25); }}
-        50%       {{ box-shadow: 0 0 35px rgba(20,184,166,0.45), 0 6px 20px rgba(37,99,235,0.35); }}
+    .stProgress > div > div > div {{
+        background: rgba(37,99,235,0.12) !important;
+        border-radius: 99px !important;
     }}
 
-    /* ══════════════════════════════════════════
-       INPUTS
-    ══════════════════════════════════════════ */
-    .stTextInput > div > div > input,
-    .stNumberInput input,
-    .stSelectbox > div > div > div {{
-        background: {INPUT_BG} !important;
-        border: 1px solid {BORDER} !important;
-        border-radius: 10px !important;
-        color: {TEXT} !important;
-        font-family: 'Sora', sans-serif !important;
-        font-size: 0.88rem !important;
-        transition: border-color 0.25s, box-shadow 0.25s;
-    }}
-    .stTextInput > div > div > input:focus,
-    .stNumberInput input:focus {{
-        border-color: rgba(37,99,235,0.6) !important;
-        box-shadow: 0 0 0 3px rgba(37,99,235,0.12) !important;
-    }}
-
-    /* ══════════════════════════════════════════
-       RESULT CARDS  (Malignant / Benign)
-    ══════════════════════════════════════════ */
-    .result-card {{
-        border-radius: 20px;
-        padding: 28px 24px;
+    /* ─────────────────────────────────────────────────────────────
+       SCAN ANIMATION RING
+    ───────────────────────────────────────────────────────────── */
+    .scan-ring-wrap {{
         text-align: center;
-        margin-bottom: 20px;
-        position: relative;
-        overflow: hidden;
-        animation: result-reveal 0.6s cubic-bezier(.34,1.56,.64,1);
+        padding: 24px 0 10px;
     }}
-    @keyframes result-reveal {{
-        0%   {{ opacity:0; transform: scale(0.88) translateY(20px); }}
-        100% {{ opacity:1; transform: scale(1)    translateY(0); }}
-    }}
-    .result-malignant {{
-        background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(220,38,38,0.06));
-        border: 2px solid rgba(239,68,68,0.55);
-        box-shadow: 0 0 40px rgba(239,68,68,0.15), inset 0 1px 0 rgba(239,68,68,0.2);
-    }}
-    .result-benign {{
-        background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(5,150,105,0.06));
-        border: 2px solid rgba(16,185,129,0.55);
-        box-shadow: 0 0 40px rgba(16,185,129,0.15), inset 0 1px 0 rgba(16,185,129,0.2);
-    }}
-    .result-tag {{
-        font-size: 0.68rem; font-weight: 700;
-        text-transform: uppercase; letter-spacing: 3px;
-        margin-bottom: 10px; opacity: 0.8;
-    }}
-    .result-type {{
-        font-family: 'JetBrains Mono', monospace;
-        font-size: clamp(1.6rem, 3vw, 2.2rem);
-        font-weight: 800;
-        letter-spacing: -0.5px;
-        margin-bottom: 8px;
-    }}
-    .result-desc {{ font-size: 0.84rem; color: {SUBTEXT}; line-height: 1.6; max-width: 400px; margin: 0 auto; }}
-
-    /* ══════════════════════════════════════════
-       RISK BADGES
-    ══════════════════════════════════════════ */
-    .badge {{
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 5px 16px;
-        border-radius: 99px;
-        font-size: 0.76rem; font-weight: 700;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-    }}
-    .badge-high   {{ background:rgba(239,68,68,0.15);  color:#f87171; border:1px solid rgba(239,68,68,0.40);  }}
-    .badge-medium {{ background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.40); }}
-    .badge-low    {{ background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.40); }}
-
-    /* ══════════════════════════════════════════
-       STEP / REC BOXES
-    ══════════════════════════════════════════ */
-    .step-box {{
-        background: {SURFACE2};
-        border: 1px solid {BORDER};
-        border-left: 3px solid #2563eb;
-        border-radius: 10px;
-        padding: 10px 14px;
-        margin-bottom: 8px;
-        font-size: 0.85rem;
-        line-height: 1.6;
-        transition: border-left-color 0.2s, background 0.2s;
-    }}
-    .step-box:hover {{
-        border-left-color: #14b8a6;
-        background: rgba(20,184,166,0.06);
-    }}
-    .step-emergency {{
-        border-left-color: #ef4444 !important;
-    }}
-    .step-emergency:hover {{ background: rgba(239,68,68,0.06) !important; }}
-
-    /* ══════════════════════════════════════════
-       TABS
-    ══════════════════════════════════════════ */
-    .stTabs [data-baseweb="tab-list"] {{
-        background: {SURFACE2} !important;
-        border-radius: 12px !important;
-        padding: 4px !important;
-        gap: 4px !important;
-        border: 1px solid {BORDER};
-    }}
-    .stTabs [data-baseweb="tab"] {{
-        border-radius: 9px !important;
-        font-family: 'Sora', sans-serif !important;
-        font-weight: 500 !important;
-        font-size: 0.83rem !important;
-        color: {SUBTEXT} !important;
-        transition: all 0.2s ease !important;
-        padding: 7px 16px !important;
-    }}
-    .stTabs [aria-selected="true"] {{
-        background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-        color: white !important;
-        box-shadow: 0 3px 10px rgba(37,99,235,0.35) !important;
-    }}
-
-    /* ══════════════════════════════════════════
-       DIVIDERS  /  MISC
-    ══════════════════════════════════════════ */
-    hr {{ border-color: {DIVIDER} !important; }}
-    .stAlert {{ border-radius: 12px !important; }}
-    .stSpinner > div {{ border-top-color: #2563eb !important; }}
-    [data-testid="stMetricLabel"]  {{ font-family:'Sora',sans-serif !important; color:{SUBTEXT} !important; font-size:0.76rem !important; }}
-    [data-testid="stMetricValue"]  {{ font-family:'JetBrains Mono',monospace !important; font-size:1.5rem !important; color:{TEXT} !important; }}
-    [data-testid="stMetricDelta"]  {{ font-size:0.78rem !important; }}
-
-    /* ══════════════════════════════════════════
-       SCROLLBAR
-    ══════════════════════════════════════════ */
-    ::-webkit-scrollbar {{ width: 5px; height: 5px; }}
-    ::-webkit-scrollbar-track {{ background: transparent; }}
-    ::-webkit-scrollbar-thumb {{ background: rgba(37,99,235,0.35); border-radius: 99px; }}
-    ::-webkit-scrollbar-thumb:hover {{ background: rgba(20,184,166,0.55); }}
-
-    /* ══════════════════════════════════════════
-       DATAFRAME
-    ══════════════════════════════════════════ */
-    [data-testid="stDataFrame"] {{
-        border: 1px solid {BORDER} !important;
-        border-radius: 14px !important;
-        overflow: hidden;
-    }}
-
-    /* ══════════════════════════════════════════
-       TOGGLE SWITCH
-    ══════════════════════════════════════════ */
-    .stToggle {{ font-family:'Sora',sans-serif !important; }}
-
-    /* ══════════════════════════════════════════
-       SETTINGS ROW
-    ══════════════════════════════════════════ */
-    .settings-row {{
-        background: {SURFACE2};
-        border: 1px solid {BORDER};
-        border-radius: 14px;
-        padding: 18px 20px;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        transition: border-color 0.25s;
-    }}
-    .settings-row:hover {{ border-color: {BORDER_H}; }}
-    .settings-label {{ font-weight: 600; font-size: 0.90rem; margin-bottom:2px; }}
-    .settings-desc  {{ font-size: 0.76rem; color: {SUBTEXT}; }}
-
-    /* ══════════════════════════════════════════
-       LIVE SCAN ANIMATION
-    ══════════════════════════════════════════ */
     .scan-ring {{
-        width: 100px; height: 100px;
+        width: 96px; height: 96px;
         border-radius: 50%;
         border: 3px solid transparent;
         border-top-color: #2563eb;
         border-right-color: #14b8a6;
-        animation: spin-ring 1.2s linear infinite;
-        margin: 0 auto 16px;
+        border-left-color: rgba(139,92,246,0.4);
+        animation: ring-spin 1.1s cubic-bezier(.47,.13,.19,.97) infinite;
+        margin: 0 auto 12px;
         position: relative;
+    }}
+    .scan-ring::before {{
+        content: '';
+        position: absolute;
+        inset: 6px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        border-top-color: rgba(20,184,166,0.5);
+        animation: ring-spin 1.7s linear infinite reverse;
     }}
     .scan-ring::after {{
         content: '🔬';
         position: absolute;
         top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%,-50%);
         font-size: 2rem;
     }}
-    @keyframes spin-ring {{
-        0%   {{ transform: rotate(0deg);   }}
-        100% {{ transform: rotate(360deg); }}
+    @keyframes ring-spin {{ 100% {{ transform: rotate(360deg); }} }}
+    .scan-status-txt {{
+        font-family: 'Oxanium', monospace;
+        font-size: 0.78rem;
+        color: {SUB};
+        letter-spacing: 2px;
+        text-transform: uppercase;
     }}
 
-    /* ══════════════════════════════════════════
-       ABCDE CARDS
-    ══════════════════════════════════════════ */
-    .abcde-card {{
-        background: {SURFACE};
-        border: 1px solid {BORDER};
-        border-radius: 16px;
-        padding: 18px 12px;
+    /* ─────────────────────────────────────────────────────────────
+       RESULT CARDS
+    ───────────────────────────────────────────────────────────── */
+    .result-card {{
+        border-radius: 20px;
+        padding: 28px 24px;
         text-align: center;
-        transition: all 0.3s cubic-bezier(.34,1.56,.64,1);
+        margin-bottom: 18px;
+        position: relative;
+        overflow: hidden;
+        animation: result-in 0.55s cubic-bezier(.34,1.56,.64,1);
+    }}
+    @keyframes result-in {{
+        from {{ opacity:0; transform:scale(0.86) translateY(18px); }}
+        to   {{ opacity:1; transform:scale(1)    translateY(0);    }}
+    }}
+    .res-mal {{
+        background: linear-gradient(135deg, rgba(239,68,68,0.13), rgba(220,38,38,0.05));
+        border: 2px solid rgba(239,68,68,0.52);
+        box-shadow: 0 0 48px rgba(239,68,68,0.12), inset 0 1px 0 rgba(239,68,68,0.18);
+    }}
+    .res-ben {{
+        background: linear-gradient(135deg, rgba(16,185,129,0.13), rgba(5,150,105,0.05));
+        border: 2px solid rgba(16,185,129,0.52);
+        box-shadow: 0 0 48px rgba(16,185,129,0.12), inset 0 1px 0 rgba(16,185,129,0.18);
+    }}
+    .res-tag  {{ font-size:0.66rem; font-weight:700; text-transform:uppercase; letter-spacing:3px; margin-bottom:9px; opacity:0.82; }}
+    .res-type {{ font-family:'Oxanium',sans-serif; font-size:clamp(1.5rem,3vw,2.1rem); font-weight:800; letter-spacing:-0.5px; margin-bottom:8px; }}
+    .res-desc {{ font-size:0.83rem; color:{SUB}; line-height:1.6; max-width:380px; margin:0 auto; }}
+
+    /* Risk badges */
+    .badge {{ display:inline-flex; align-items:center; gap:5px; padding:5px 16px; border-radius:99px; font-size:0.76rem; font-weight:700; letter-spacing:0.4px; text-transform:uppercase; }}
+    .b-high   {{ background:rgba(239,68,68,0.14);  color:#f87171; border:1px solid rgba(239,68,68,0.38);  }}
+    .b-medium {{ background:rgba(245,158,11,0.14); color:#fbbf24; border:1px solid rgba(245,158,11,0.38); }}
+    .b-low    {{ background:rgba(16,185,129,0.14); color:#34d399; border:1px solid rgba(16,185,129,0.38); }}
+
+    /* Image quality badge */
+    .qual-badge-ok   {{ background:rgba(16,185,129,0.12); color:#34d399; border:1px solid rgba(16,185,129,0.30); padding:4px 12px; border-radius:99px; font-size:0.73rem; font-weight:600; display:inline-block; }}
+    .qual-badge-warn {{ background:rgba(245,158,11,0.12); color:#fbbf24; border:1px solid rgba(245,158,11,0.30); padding:4px 12px; border-radius:99px; font-size:0.73rem; font-weight:600; display:inline-block; }}
+
+    /* ─────────────────────────────────────────────────────────────
+       STEP / RECOMMENDATION BOXES
+    ───────────────────────────────────────────────────────────── */
+    .step-box {{
+        background: {SURF2};
+        border: 1px solid {BORDER};
+        border-left: 3px solid #2563eb;
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        font-size: 0.84rem;
+        line-height: 1.6;
+        transition: border-left-color 0.22s, background 0.22s;
+    }}
+    .step-box:hover {{ border-left-color:#14b8a6; background:rgba(20,184,166,0.05); }}
+    .step-emg {{ border-left-color:#ef4444 !important; }}
+    .step-emg:hover {{ background:rgba(239,68,68,0.05) !important; }}
+
+    /* ─────────────────────────────────────────────────────────────
+       TABS
+    ───────────────────────────────────────────────────────────── */
+    .stTabs [data-baseweb="tab-list"] {{
+        background:{SURF2} !important; border-radius:12px !important;
+        padding:4px !important; gap:3px !important; border:1px solid {BORDER};
+    }}
+    .stTabs [data-baseweb="tab"] {{
+        border-radius:9px !important; font-family:'Outfit',sans-serif !important;
+        font-weight:500 !important; font-size:0.82rem !important;
+        color:{SUB} !important; padding:7px 16px !important; transition:all 0.2s !important;
+    }}
+    .stTabs [aria-selected="true"] {{
+        background:linear-gradient(135deg,#2563eb,#1d4ed8) !important;
+        color:white !important;
+        box-shadow:0 3px 10px rgba(37,99,235,0.38) !important;
+    }}
+
+    /* ─────────────────────────────────────────────────────────────
+       INPUTS
+    ───────────────────────────────────────────────────────────── */
+    .stTextInput > div > div > input,
+    .stNumberInput input,
+    .stSelectbox > div > div > div {{
+        background:{INP} !important; border:1px solid {BORDER} !important;
+        border-radius:10px !important; color:{TEXT} !important;
+        font-family:'Outfit',sans-serif !important; font-size:0.87rem !important;
+    }}
+    .stTextInput > div > div > input:focus {{
+        border-color:rgba(37,99,235,0.55) !important;
+        box-shadow:0 0 0 3px rgba(37,99,235,0.10) !important;
+    }}
+
+    /* ─────────────────────────────────────────────────────────────
+       MISC  ·  scrollbar · metrics · alerts · dataframe
+    ───────────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar {{ width:5px; height:5px; }}
+    ::-webkit-scrollbar-track {{ background:transparent; }}
+    ::-webkit-scrollbar-thumb {{ background:rgba(37,99,235,0.30); border-radius:99px; }}
+    ::-webkit-scrollbar-thumb:hover {{ background:rgba(20,184,166,0.50); }}
+
+    [data-testid="stMetricLabel"] {{ font-family:'Outfit',sans-serif !important; color:{SUB} !important; font-size:0.74rem !important; text-transform:uppercase; letter-spacing:1.5px; }}
+    [data-testid="stMetricValue"] {{ font-family:'Oxanium',monospace !important; font-size:1.45rem !important; color:{TEXT} !important; }}
+    [data-testid="stMetricDelta"] {{ font-size:0.75rem !important; }}
+
+    .stAlert {{ border-radius:12px !important; }}
+    .stSpinner > div {{ border-top-color:#2563eb !important; }}
+
+    [data-testid="stDataFrame"] {{
+        border:1px solid {BORDER} !important;
+        border-radius:14px !important;
+        overflow:hidden;
+    }}
+
+    hr {{ border-color:{DIV} !important; opacity:0.8; }}
+
+    /* Settings rows */
+    .set-row {{
+        background:{SURF2};
+        border:1px solid {BORDER};
+        border-radius:14px;
+        padding:16px 20px;
+        margin-bottom:10px;
+        transition:border-color 0.22s;
+    }}
+    .set-row:hover {{ border-color:{BDH}; }}
+    .set-lbl {{ font-weight:600; font-size:0.88rem; margin-bottom:2px; }}
+    .set-desc {{ font-size:0.74rem; color:{SUB}; }}
+
+    /* ABCDE cards */
+    .abcde-card {{
+        background:{SURF}; border:1px solid {BORDER}; border-radius:16px;
+        padding:18px 10px; text-align:center;
+        transition:all 0.28s cubic-bezier(.34,1.56,.64,1);
     }}
     .abcde-card:hover {{
-        transform: translateY(-6px) scale(1.04);
-        border-color: rgba(139,92,246,0.5);
-        box-shadow: 0 12px 30px rgba(139,92,246,0.2);
+        transform:translateY(-7px) scale(1.04);
+        border-color:rgba(139,92,246,0.48);
+        box-shadow:0 14px 32px rgba(139,92,246,0.18);
     }}
-    .abcde-letter {{
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 2.4rem; font-weight: 800;
-        margin-bottom: 6px;
-    }}
-    .abcde-word  {{ font-weight: 700; font-size: 0.88rem; margin-bottom: 4px; }}
-    .abcde-desc  {{ font-size: 0.73rem; color: {SUBTEXT}; line-height: 1.4; }}
+    .abcde-letter {{ font-family:'Oxanium',monospace; font-size:2.4rem; font-weight:800; margin-bottom:5px; }}
+    .abcde-word   {{ font-weight:700; font-size:0.86rem; margin-bottom:4px; }}
+    .abcde-desc   {{ font-size:0.72rem; color:{SUB}; line-height:1.45; }}
 
-    /* ══════════════════════════════════════════
-       MOBILE RESPONSIVE
-    ══════════════════════════════════════════ */
-    @media (max-width: 768px) {{
-        .page-banner  {{ padding: 18px 16px; }}
-        .banner-title {{ font-size: 1.4rem; }}
-        .glass-card   {{ padding: 16px; border-radius: 14px; }}
-        .kpi-card     {{ padding: 14px 10px; }}
-        .kpi-value    {{ font-size: 1.6rem; }}
+    /* Contact card */
+    .contact-card {{
+        background:{SURF};
+        border:1px solid {BORDER};
+        border-radius:18px;
+        padding:24px 20px;
+        text-align:center;
+        transition:all 0.28s cubic-bezier(.34,1.56,.64,1);
+    }}
+    .contact-card:hover {{
+        transform:translateY(-5px);
+        border-color:{BDH};
+        box-shadow:0 16px 40px rgba(37,99,235,0.14);
+    }}
+
+    /* Mobile responsive */
+    @media (max-width:768px) {{
+        .navbar-shell {{ padding:0 12px; height:58px; }}
+        .nav-ai-badge {{ display:none; }}
+        .hero-section {{ padding:28px 20px; }}
+        .hero-section::after {{ display:none; }}
+        .glass-card   {{ padding:14px; }}
+        .kpi-card     {{ padding:14px 10px; }}
+        .kpi-value    {{ font-size:1.55rem; }}
+        .page-banner  {{ padding:20px 18px; }}
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -633,9 +823,9 @@ class NeuralCoreEngine:
 
     def __init__(self):
         self.is_online = False
-        self.model     = self._load_model()
+        self.model     = self._load()
 
-    def _load_model(self):
+    def _load(self):
         try:
             from tensorflow.keras.models import load_model  # type: ignore
             m = load_model(self.MODEL_FILE)
@@ -644,19 +834,14 @@ class NeuralCoreEngine:
         except Exception:
             return None
 
-    def execute_scan(self, pil_image: Image.Image) -> dict:
+    def execute_scan(self, pil_img: Image.Image) -> dict:
         if self.is_online:
-            raw = self._infer(pil_image)
+            raw = self._infer(pil_img)
         else:
-            raw = random.uniform(0.07, 0.93)
+            raw = random.uniform(0.07, 0.94)
 
-        if raw >= 0.50:
-            diag  = "Malignant"
-            prob  = raw
-        else:
-            diag  = "Benign"
-            prob  = 1.0 - raw
-
+        diag = "Malignant" if raw >= 0.50 else "Benign"
+        prob = raw if diag == "Malignant" else (1.0 - raw)
         risk = "HIGH" if prob >= 0.80 else ("MEDIUM" if prob >= 0.50 else "LOW")
 
         return {
@@ -664,13 +849,12 @@ class NeuralCoreEngine:
             "probability":prob,
             "confidence": min(prob + random.uniform(0.01, 0.05), 0.99),
             "risk_level": risk,
-            "raw_score":  raw,
             "model_mode": "Neural Network Online" if self.is_online else "Simulation Mode",
         }
 
-    def _infer(self, pil_image):
+    def _infer(self, pil_img):
         from tensorflow.keras.preprocessing.image import img_to_array  # type: ignore
-        img = pil_image.convert("RGB").resize(self.INPUT_SIZE)
+        img = pil_img.convert("RGB").resize(self.INPUT_SIZE)
         arr = np.expand_dims(img_to_array(img) / 255.0, axis=0)
         return float(self.model.predict(arr, verbose=0)[0][0])
 
@@ -679,35 +863,38 @@ class NeuralCoreEngine:
 #  CLASS 2 · ImageProcessor
 # ══════════════════════════════════════════════════════════════════
 class ImageProcessor:
+
     @staticmethod
     def validate(file_obj):
-        ext = file_obj.name.rsplit(".", 1)[-1].lower()
-        if ext not in {"jpg", "jpeg", "png"}:
-            return False, f"❌ Format '.{ext}' not accepted. Use JPG, JPEG, or PNG."
-        if file_obj.size > 10 * 1024 * 1024:
-            return False, f"❌ File too large ({file_obj.size/1e6:.1f} MB). Maximum 10 MB."
+        ext = file_obj.name.rsplit(".", 1)[-1].lower() if hasattr(file_obj, "name") else "png"
+        if ext not in {"jpg","jpeg","png"}:
+            return False, f"❌ Format '.{ext}' not accepted. Use JPG, JPEG, or PNG.", "low"
+        if hasattr(file_obj, "size") and file_obj.size > 10*1024*1024:
+            return False, f"❌ File too large. Max 10 MB.", "low"
         try:
             img = Image.open(file_obj); img.verify()
         except Exception:
-            return False, "❌ Corrupted or unreadable image file."
+            return False, "❌ Corrupted or unreadable image file.", "low"
         file_obj.seek(0)
         img = Image.open(file_obj)
-        if img.size[0] < 100 or img.size[1] < 100:
-            return False, f"❌ Resolution {img.size[0]}×{img.size[1]} px too low. Min: 100×100."
+        w, h = img.size
+        if w < 100 or h < 100:
+            return False, f"❌ Resolution {w}×{h} too low. Min: 100×100 px.", "low"
         file_obj.seek(0)
-        return True, "✅ Image validated and ready for scanning."
+        quality = "high" if (w >= 300 and h >= 300) else "medium"
+        return True, f"✅ Validated  ·  {w}×{h} px  ·  Quality: {quality.upper()}", quality
 
     @staticmethod
-    def preprocess(pil_image):
-        img = pil_image.convert("RGB").resize((224, 224), Image.LANCZOS)
+    def preprocess(pil_img):
+        img = pil_img.convert("RGB").resize((224,224), Image.LANCZOS)
         img = ImageEnhance.Contrast(img).enhance(1.20)
         img = ImageEnhance.Sharpness(img).enhance(1.15)
         return img
 
     @staticmethod
-    def display_copy(pil_image):
-        img = pil_image.convert("RGB")
-        img.thumbnail((640, 640), Image.LANCZOS)
+    def thumb(pil_img, size=640):
+        img = pil_img.convert("RGB")
+        img.thumbnail((size, size), Image.LANCZOS)
         return img
 
 
@@ -717,114 +904,107 @@ class ImageProcessor:
 class ClinicalProtocols:
     _DB = {
         "Malignant": {
-            "hex":         "#ef4444",
-            "glow":        "rgba(239,68,68,0.15)",
-            "icon":        "🔴",
-            "css":         "result-malignant",
-            "description": "AI analysis detects characteristics strongly consistent with a malignant skin lesion. Immediate clinical evaluation is critical.",
-            "ai_message":  "HIGH RISK: Irregular pigmentation, asymmetric borders, and multi-color variation patterns indicate malignancy. Urgent dermatological consultation is required within 48 hours.",
-            "recommendations": [
+            "hex":"#ef4444","css":"res-mal","icon":"🔴",
+            "description":"AI detects characteristics consistent with a malignant skin lesion. Immediate clinical evaluation is critical.",
+            "ai_message":"HIGH RISK ALERT: Irregular pigmentation, asymmetric borders, and multi-color pattern detected — consistent with malignancy. Urgent dermatological consultation required within 48 hours.",
+            "recommendations":[
                 "🏥 Consult an oncology-dermatologist within 48 hours — do not delay.",
                 "🔬 Request formal dermoscopy evaluation and excisional biopsy.",
-                "🚫 Avoid all UV exposure immediately — sunlight and artificial tanning.",
+                "🚫 Avoid all UV exposure immediately — sun and artificial tanning.",
                 "🧴 Apply broad-spectrum SPF 100+ at all outdoor times.",
                 "📋 Request full-body skin mapping (digital dermoscopic photography).",
                 "🩸 Discuss Sentinel Lymph Node Biopsy (SLNB) with your surgeon.",
                 "🥗 Antioxidant-rich diet: berries, leafy greens, omega-3 fatty acids.",
             ],
-            "patient_advice": [
-                "Wear UPF 50+ protective clothing and wide-brim hats daily.",
+            "patient_advice":[
+                "Wear UPF 50+ clothing and wide-brim hats daily without exception.",
                 "Stay indoors during peak UV hours — 10:00 AM to 4:00 PM.",
                 "Perform weekly ABCDE self-examinations on all skin lesions.",
-                "Eliminate tobacco use — it significantly accelerates cancer progression.",
-                "Maintain Vitamin D levels through supplementation only (not sun exposure).",
-                "Keep a photographic diary of all lesions to track changes over time.",
+                "Eliminate tobacco and alcohol use — accelerates cancer progression.",
+                "Vitamin D only through supplementation, never from sun exposure.",
+                "Keep a photographic log of lesion changes for physician review.",
             ],
-            "procedures": [
-                "Wide Local Excision (WLE) — surgical removal with clear safety margins.",
-                "Mohs Micrographic Surgery — precise layer-by-layer tissue-sparing excision.",
-                "Sentinel Lymph Node Biopsy (SLNB) — assess regional lymphatic spread.",
-                "Adjuvant Radiation Therapy — post-surgical residual cancer cell elimination.",
-                "Systemic Immunotherapy: Pembrolizumab (Keytruda) / Ipilimumab (Yervoy).",
+            "procedures":[
+                "Wide Local Excision (WLE) — removal with clear safety margins.",
+                "Mohs Micrographic Surgery — layer-by-layer tissue-sparing excision.",
+                "Sentinel Lymph Node Biopsy (SLNB) — regional lymphatic assessment.",
+                "Adjuvant Radiation Therapy — post-surgical residual cell ablation.",
+                "Systemic Immunotherapy: Pembrolizumab / Ipilimumab protocols.",
             ],
-            "medications": [
-                "BRAF/MEK inhibitors: Vemurafenib + Cobimetinib (targeted therapy).",
-                "Pembrolizumab (Keytruda) — PD-1 immune checkpoint inhibitor.",
-                "Dabrafenib + Trametinib — for BRAF V600E/K mutated cases.",
-                "Topical Imiquimod 5% cream — for superficial lesions (physician-directed).",
+            "medications":[
+                "Targeted: BRAF/MEK inhibitors — Vemurafenib + Cobimetinib.",
+                "Immunotherapy: Pembrolizumab (Keytruda) — PD-1 checkpoint inhibitor.",
+                "Dabrafenib + Trametinib — for BRAF V600E/K mutation cases.",
+                "Topical Imiquimod 5% cream — superficial lesions (physician-directed).",
             ],
-            "therapy": [
-                "Photodynamic Therapy (PDT) for localized superficial lesions.",
+            "therapy":[
+                "Photodynamic Therapy (PDT) for localized superficial involvement.",
                 "Electrochemotherapy as adjuvant management post-excision.",
                 "Intralesional IL-2 cytokine injection therapy.",
             ],
-            "emergency_signs": [
+            "emergency_signs":[
                 "⚠️ Rapid lesion enlargement beyond 6mm within days.",
-                "⚠️ Spontaneous ulceration, bleeding, or crusting of the lesion.",
-                "⚠️ Visible lymph node swelling in neck, armpit, or groin near lesion.",
-                "⚠️ Satellite lesions appearing around the main lesion.",
-                "⚠️ Pain, numbness, or tingling sensation around the lesion area.",
+                "⚠️ Spontaneous ulceration, bleeding, or crusting of lesion.",
+                "⚠️ Visible lymph node swelling near neck, armpit, or groin.",
+                "⚠️ Satellite lesions appearing around the primary lesion.",
+                "⚠️ Pain, numbness, or tingling sensation around lesion area.",
             ],
-            "followup": "Bi-weekly monitoring for 3 months post-surgery. PET-CT at 6 months. Oncology review every 3 months for 2 years.",
-            "consultation": "🚨 URGENT: Schedule with Onco-Dermatologist within 48 hours.",
+            "followup":"Bi-weekly monitoring for 3 months. PET-CT at 6 months. Oncology review every 3 months for 2 years.",
+            "consultation":"🚨 URGENT: Schedule Onco-Dermatologist within 48 hours.",
         },
         "Benign": {
-            "hex":         "#10b981",
-            "glow":        "rgba(16,185,129,0.15)",
-            "icon":        "🟢",
-            "css":         "result-benign",
-            "description": "AI analysis indicates a benign skin lesion with low malignant potential. Routine monitoring is recommended as best practice.",
-            "ai_message":  "LOW RISK: Symmetric borders, uniform pigmentation, and regular morphology are consistent with a benign melanocytic nevus. Routine annual dermatology monitoring is advised.",
-            "recommendations": [
+            "hex":"#10b981","css":"res-ben","icon":"🟢",
+            "description":"AI indicates a benign skin lesion with low malignant potential. Routine monitoring is recommended as best practice.",
+            "ai_message":"LOW RISK: Symmetric borders, uniform pigmentation, and regular morphology are consistent with a benign melanocytic nevus. Annual dermatology monitoring is advised.",
+            "recommendations":[
                 "✅ No urgent surgical intervention required at this time.",
                 "📅 Schedule a routine annual dermatology skin check.",
                 "🔍 Perform monthly ABCDE self-examinations as best practice.",
-                "🧴 Apply daily SPF 50+ broad-spectrum sunscreen for prevention.",
-                "📸 Photograph the lesion now to establish a monitoring baseline.",
-                "🥗 Maintain healthy lifestyle — antioxidant diet and adequate hydration.",
+                "🧴 Apply daily SPF 50+ broad-spectrum sunscreen.",
+                "📸 Photograph the lesion to establish a monitoring baseline.",
+                "🥗 Antioxidant diet and adequate hydration for skin health.",
                 "📞 Consult a doctor immediately if the lesion changes in any way.",
             ],
-            "patient_advice": [
+            "patient_advice":[
                 "Standard daily sun protection measures are sufficient.",
-                "Maintain balanced diet rich in antioxidants, vitamins C and E.",
+                "Balanced diet rich in antioxidants and vitamins C and E.",
                 "Adequate hydration — minimum 2+ litres of water per day.",
-                "Avoid mechanical trauma, scratching, or irritating the lesion.",
+                "Avoid mechanical trauma or scratching of the lesion.",
                 "Annual professional dermoscopy evaluation for documentation.",
                 "Monitor for ABCDE changes at least once per month.",
             ],
-            "procedures": [
-                "Clinical observation only — no immediate surgical intervention.",
+            "procedures":[
+                "Clinical observation — no immediate surgical intervention needed.",
                 "Digital dermoscopy photography for baseline documentation.",
                 "Elective shave excision for cosmetic removal (if desired).",
                 "Punch excision if histological confirmation is requested.",
-                "CO2 Laser ablation for cosmetic concerns at patient's discretion.",
+                "CO2 Laser ablation for cosmetic concerns (patient preference).",
             ],
-            "medications": [
-                "No medications required. SPF is the primary daily intervention.",
+            "medications":[
+                "None required — SPF 50+ sunscreen is the primary intervention.",
                 "Topical Vitamin C antioxidant serum for skin maintenance.",
                 "Ceramide-based barrier moisturizers for skin health.",
-                "Vitamin D supplementation — consult physician for correct dosage.",
+                "Vitamin D supplementation — consult physician for dosage.",
             ],
-            "therapy": [
+            "therapy":[
                 "Cryotherapy (liquid nitrogen) — elective symptomatic relief only.",
                 "Topical retinoids for general skin maintenance (physician-directed).",
-                "PDT only if pre-malignant features emerge on follow-up evaluation.",
+                "PDT only if pre-malignant features emerge on follow-up.",
             ],
-            "emergency_signs": [
-                "⚠️ Any sudden change in size, shape, or color (ABCDE rule).",
+            "emergency_signs":[
+                "⚠️ Any sudden change in size, shape, or color (ABCDE).",
                 "⚠️ Unexpected bleeding or oozing without physical trauma.",
                 "⚠️ New satellite lesions appearing near the original lesion.",
-                "⚠️ Persistent itching, burning, or pain in the lesion area.",
+                "⚠️ Persistent itching, burning, or pain in lesion area.",
                 "⚠️ Lesion fails to heal after minor trauma within 4 weeks.",
             ],
-            "followup": "Annual routine dermatology screening. AI re-evaluation recommended in 6 months.",
-            "consultation": "📅 Routine annual dermatology appointment. Consult earlier if ABCDE changes appear.",
+            "followup":"Annual routine dermatology screening. AI re-evaluation recommended in 6 months.",
+            "consultation":"📅 Routine annual dermatology appointment. Consult earlier if ABCDE changes appear.",
         },
     }
 
     @classmethod
-    def fetch_data(cls, diagnosis: str) -> dict:
-        return cls._DB.get(diagnosis, cls._DB["Benign"])
+    def get(cls, diag): return cls._DB.get(diag, cls._DB["Benign"])
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -833,972 +1013,838 @@ class ClinicalProtocols:
 class ReportGenerator:
 
     @staticmethod
-    def pdf(record: dict, img: Image.Image) -> bytes:
+    def pdf(record, img):
         buf = io.BytesIO()
-        if not PDF_OK:
-            buf.write(b"Install reportlab: pip install reportlab"); return buf.getvalue()
-
+        if not PDF_OK: buf.write(b"pip install reportlab"); return buf.getvalue()
         doc  = SimpleDocTemplate(buf, pagesize=A4,
                                  rightMargin=1.8*cm, leftMargin=1.8*cm,
-                                 topMargin=1.5*cm,   bottomMargin=1.5*cm)
-        st_  = getSampleStyleSheet()
-        BLUE = colors.HexColor("#1e3a5f")
-        GRAY = colors.HexColor("#64748b")
+                                 topMargin=1.5*cm, bottomMargin=1.5*cm)
+        BLUE = rl_colors.HexColor("#1e3a5f")
+        GRAY = rl_colors.HexColor("#64748b")
         diag = record.get("diagnosis","Benign")
-        RISK = colors.HexColor("#ef4444" if diag=="Malignant" else "#10b981")
-
-        H1  = ParagraphStyle("H1",  fontSize=19, fontName="Helvetica-Bold", textColor=BLUE,    alignment=TA_CENTER, spaceAfter=3)
-        SUB = ParagraphStyle("SUB", fontSize=8.5,fontName="Helvetica",       textColor=GRAY,    alignment=TA_CENTER, spaceAfter=10)
-        SEC = ParagraphStyle("SEC", fontSize=11, fontName="Helvetica-Bold",  textColor=BLUE,    spaceAfter=6, spaceBefore=10)
-        TXT = ParagraphStyle("TXT", fontSize=8.5,fontName="Helvetica",       textColor=colors.HexColor("#374151"), spaceAfter=3, leading=13, leftIndent=6)
-        DIS = ParagraphStyle("DIS", fontSize=7.5,fontName="Helvetica",       textColor=GRAY,    alignment=TA_JUSTIFY, leading=12)
-        FTR = ParagraphStyle("FTR", fontSize=7,  fontName="Helvetica",       textColor=colors.HexColor("#94a3b8"), alignment=TA_CENTER)
-
+        RISK = rl_colors.HexColor("#ef4444" if diag=="Malignant" else "#10b981")
+        H1   = ParagraphStyle("H1",  fontSize=19,fontName="Helvetica-Bold",textColor=BLUE,   alignment=TA_CENTER,spaceAfter=3)
+        SUB  = ParagraphStyle("SUB", fontSize=8.5,fontName="Helvetica",    textColor=GRAY,   alignment=TA_CENTER,spaceAfter=10)
+        SEC  = ParagraphStyle("SEC", fontSize=11, fontName="Helvetica-Bold",textColor=BLUE,  spaceAfter=6,spaceBefore=10)
+        TXT  = ParagraphStyle("TXT", fontSize=8.5,fontName="Helvetica",    textColor=rl_colors.HexColor("#374151"),spaceAfter=3,leading=13,leftIndent=6)
+        DIS  = ParagraphStyle("DIS", fontSize=7.5,fontName="Helvetica",    textColor=GRAY,   alignment=TA_JUSTIFY,leading=12)
+        FTR  = ParagraphStyle("FTR", fontSize=7,  fontName="Helvetica",    textColor=rl_colors.HexColor("#94a3b8"),alignment=TA_CENTER)
         story = [
             Paragraph("🔬  SkinScan AI — Clinical Intelligence Platform", H1),
-            Paragraph("Automated Dermoscopic Cancer Detection Report  ·  v13.0", SUB),
-            HRFlowable(width="100%", thickness=2, color=BLUE),
-            Spacer(1, 10),
+            Paragraph("Dermoscopic Cancer Detection Report  ·  v14.0", SUB),
+            HRFlowable(width="100%",thickness=2,color=BLUE), Spacer(1,10),
         ]
-
         rows = [
-            ["FIELD", "DETAIL"],
-            ["Patient Name",      record.get("patient_name","N/A")],
-            ["Age",               str(record.get("age","N/A"))],
-            ["Gender",            record.get("gender","N/A")],
-            ["Scan Date & Time",  record.get("timestamp","N/A")],
-            ["AI Diagnosis",      diag],
-            ["Risk Level",        record.get("risk_level","N/A")],
-            ["Cancer Probability",f"{record.get('probability',0)*100:.1f}%"],
-            ["AI Confidence",     f"{record.get('confidence',0)*100:.1f}%"],
-            ["Model Status",      record.get("model_mode","N/A")],
+            ["FIELD","DETAIL"],
+            ["Patient Name",     record.get("patient_name","N/A")],
+            ["Age",              str(record.get("age","N/A"))],
+            ["Gender",           record.get("gender","N/A")],
+            ["Scan Date & Time", record.get("timestamp","N/A")],
+            ["AI Diagnosis",     diag],
+            ["Risk Level",       record.get("risk_level","N/A")],
+            ["Probability",      f"{record.get('probability',0)*100:.1f}%"],
+            ["AI Confidence",    f"{record.get('confidence',0)*100:.1f}%"],
+            ["Model Status",     record.get("model_mode","N/A")],
         ]
-        tbl = Table(rows, colWidths=[5.5*cm, 12.5*cm])
+        tbl = Table(rows, colWidths=[5.5*cm,12.5*cm])
         tbl.setStyle(TableStyle([
-            ("BACKGROUND",     (0,0),(-1,0), BLUE),
-            ("TEXTCOLOR",      (0,0),(-1,0), colors.white),
-            ("FONTNAME",       (0,0),(-1,0), "Helvetica-Bold"),
-            ("ROWBACKGROUNDS", (0,1),(-1,-1),[colors.HexColor("#f0f4f8"),colors.white]),
-            ("FONTNAME",       (0,1),(0,-1), "Helvetica-Bold"),
-            ("FONTSIZE",       (0,0),(-1,-1),9),
-            ("GRID",           (0,0),(-1,-1),0.4, colors.HexColor("#dde3ea")),
-            ("PADDING",        (0,0),(-1,-1),7),
-            ("TEXTCOLOR",      (1,6),(1,6),  RISK),
-            ("FONTNAME",       (1,6),(1,6),  "Helvetica-Bold"),
+            ("BACKGROUND",(0,0),(-1,0),BLUE),("TEXTCOLOR",(0,0),(-1,0),rl_colors.white),
+            ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+            ("ROWBACKGROUNDS",(0,1),(-1,-1),[rl_colors.HexColor("#f0f4f8"),rl_colors.white]),
+            ("FONTNAME",(0,1),(0,-1),"Helvetica-Bold"),
+            ("FONTSIZE",(0,0),(-1,-1),9),
+            ("GRID",(0,0),(-1,-1),0.4,rl_colors.HexColor("#dde3ea")),
+            ("PADDING",(0,0),(-1,-1),7),
+            ("TEXTCOLOR",(1,6),(1,6),RISK),("FONTNAME",(1,6),(1,6),"Helvetica-Bold"),
         ]))
-        story += [Paragraph("Patient & Scan Information", SEC), tbl, Spacer(1,12)]
-
+        story += [Paragraph("Patient & Scan Information",SEC), tbl, Spacer(1,12)]
         try:
-            ibuf = io.BytesIO()
-            th   = img.copy(); th.thumbnail((160,160)); th.save(ibuf, format="PNG"); ibuf.seek(0)
-            ri   = RLImage(ibuf, width=4.5*cm, height=4.5*cm)
-            it   = Table([[ri]], colWidths=[18*cm])
+            ibuf=io.BytesIO(); th=img.copy(); th.thumbnail((160,160)); th.save(ibuf,format="PNG"); ibuf.seek(0)
+            ri=RLImage(ibuf,width=4.5*cm,height=4.5*cm)
+            it=Table([[ri]],colWidths=[18*cm])
             it.setStyle(TableStyle([("ALIGN",(0,0),(-1,-1),"CENTER")]))
-            story += [Paragraph("Uploaded Dermoscopic Image", SEC), it, Spacer(1,10)]
-        except Exception:
-            pass
-
-        kb = ClinicalProtocols.fetch_data(diag)
-        story += [Paragraph("AI Diagnostic Assessment", SEC),
-                  Paragraph(kb["ai_message"], ParagraphStyle("msg",fontSize=8.5,fontName="Helvetica",
-                    textColor=colors.HexColor("#374151"),backColor=colors.HexColor("#f0f9ff"),
+            story+=[Paragraph("Uploaded Image",SEC), it, Spacer(1,10)]
+        except Exception: pass
+        kb = ClinicalProtocols.get(diag)
+        story+=[Paragraph("AI Assessment",SEC),
+                Paragraph(kb["ai_message"],ParagraphStyle("msg",fontSize=8.5,fontName="Helvetica",
+                    textColor=rl_colors.HexColor("#374151"),backColor=rl_colors.HexColor("#f0f9ff"),
                     borderPadding=7,leading=14,spaceAfter=10))]
-
-        story.append(Paragraph("Clinical Recommendations", SEC))
-        for r in kb["recommendations"]: story.append(Paragraph(f"• {r}", TXT))
+        story.append(Paragraph("Clinical Recommendations",SEC))
+        for r in kb["recommendations"]: story.append(Paragraph(f"• {r}",TXT))
         story.append(Spacer(1,8))
-
-        story.append(Paragraph("Treatment Plan", SEC))
-        for label,key in [("Procedures","procedures"),("Medications","medications"),
-                           ("Therapy","therapy"),("Emergency Signs","emergency_signs")]:
-            story.append(Paragraph(f"▸ {label}", ParagraphStyle("cat",fontSize=9,fontName="Helvetica-Bold",
-                textColor=colors.HexColor("#ef4444" if "Emergency" in label else "#2563eb"),
-                spaceAfter=2,leftIndent=4,spaceBefore=5)))
-            for i in kb[key]: story.append(Paragraph(f"  – {i}", TXT))
-        story.append(Spacer(1,8))
-
-        story += [
-            Paragraph("Follow-up Protocol", SEC),
-            Paragraph(kb["followup"], TXT),
-            Spacer(1,12),
-            HRFlowable(width="100%", thickness=0.7, color=colors.HexColor("#e2e8f0")),
-            Spacer(1,6),
-            Paragraph("⚠️ AI DISCLAIMER: This report is generated by an AI-powered research tool for educational and "
-                      "academic purposes only. It does NOT constitute a formal medical diagnosis. Always consult a "
-                      "board-certified dermatologist or oncologist for all clinical decisions.", DIS),
-            Spacer(1,5),
-            Paragraph(f"SkinScan AI Clinical Intelligence Platform v13.0  ·  Rehan Shafique  ·  "
-                      f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}", FTR),
-        ]
-
+        story.append(Paragraph("Treatment Plan",SEC))
+        for lbl,key in [("Procedures","procedures"),("Medications","medications"),
+                        ("Therapy","therapy"),("Emergency Signs","emergency_signs")]:
+            story.append(Paragraph(f"▸ {lbl}",ParagraphStyle("cat",fontSize=9,fontName="Helvetica-Bold",
+                textColor=rl_colors.HexColor("#ef4444" if "Emergency" in lbl else "#2563eb"),
+                spaceAfter=2,leftIndent=4,spaceBefore=4)))
+            for i in kb[key]: story.append(Paragraph(f"  – {i}",TXT))
+        story+=[Spacer(1,8),Paragraph("Follow-up",SEC),Paragraph(kb["followup"],TXT),Spacer(1,12),
+                HRFlowable(width="100%",thickness=0.7,color=rl_colors.HexColor("#e2e8f0")),Spacer(1,6),
+                Paragraph("⚠️ AI DISCLAIMER: Research & educational tool only. Not a medical diagnosis. "
+                          "Always consult a certified dermatologist or oncologist.",DIS),Spacer(1,5),
+                Paragraph(f"SkinScan AI v14.0  ·  Rehan Shafique  ·  "
+                          f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}",FTR)]
         doc.build(story)
         return buf.getvalue()
 
     @staticmethod
-    def csv(database: list) -> str:
-        if not database: return ""
+    def csv_data(db):
+        if not db: return ""
         return pd.DataFrame([{
-            "Timestamp":    r.get("timestamp",""),
-            "Patient":      r.get("patient_name",""),
-            "Age":          r.get("age",""),
-            "Gender":       r.get("gender",""),
-            "Diagnosis":    r.get("diagnosis",""),
-            "Risk":         r.get("risk_level",""),
-            "Probability%": f"{r.get('probability',0)*100:.2f}",
-            "Confidence%":  f"{r.get('confidence',0)*100:.2f}",
-            "Model":        r.get("model_mode",""),
-        } for r in database]).to_csv(index=False)
+            "Timestamp":   r.get("timestamp",""),
+            "Patient":     r.get("patient_name",""),
+            "Age":         r.get("age",""),
+            "Gender":      r.get("gender",""),
+            "Diagnosis":   r.get("diagnosis",""),
+            "Risk":        r.get("risk_level",""),
+            "Probability%":f"{r.get('probability',0)*100:.2f}",
+            "Confidence%": f"{r.get('confidence',0)*100:.2f}",
+            "Model":       r.get("model_mode",""),
+        } for r in db]).to_csv(index=False)
 
 
 # ══════════════════════════════════════════════════════════════════
-#  CLASS 5 · SkinScanEnterpriseSuite  (Master Controller)
+#  CLASS 5 · SkinScanApp  (Master Controller)
 # ══════════════════════════════════════════════════════════════════
-class SkinScanEnterpriseSuite:
+class SkinScanApp:
 
     def __init__(self):
         st.set_page_config(
             page_title="SkinScan AI — Clinical Intelligence",
             page_icon="🔬",
             layout="wide",
-            initial_sidebar_state="expanded",
+            initial_sidebar_state="collapsed",
         )
         self._init_state()
-        self.ai_engine = NeuralCoreEngine()
-        inject_premium_css(st.session_state.app_theme)
+        self.ai = NeuralCoreEngine()
+        inject_css(st.session_state.theme)
 
     def _init_state(self):
-        defaults = {
-            "app_theme":       "dark",
-            "medical_database":   [],
-            "last_result":        None,
-            "last_raw_img":       None,
-            "last_processed_img": None,
-        }
-        for k, v in defaults.items():
+        for k,v in {
+            "theme":"dark","db":[],"result":None,
+            "raw_img":None,"proc_img":None,"input_mode":"upload",
+        }.items():
             if k not in st.session_state:
                 st.session_state[k] = v
 
     # ──────────────────────────────────────────────────────────────
-    #  SIDEBAR
+    #  TOP NAVBAR
     # ──────────────────────────────────────────────────────────────
-    def build_sidebar(self) -> str:
-        with st.sidebar:
-            # Brand
-            st.markdown("""
-            <div class="sb-brand">
-                <span class="sb-icon">🔬</span>
-                <div class="sb-title">SkinScan AI</div>
-                <div class="sb-sub">Clinical Intelligence · v13</div>
-            </div>
-            """, unsafe_allow_html=True)
-            st.divider()
+    def _navbar(self) -> str:
+        # Inject fixed HTML navbar shell (logo + AI badge)
+        theme_icon = "🌙" if st.session_state.theme == "dark" else "☀️"
+        ai_status  = "🟢 AI Online" if self.ai.is_online else "🟠 Sim Mode"
 
-            # Navigation
-            nav = option_menu(
-                menu_title=None,
-                options=["Dashboard", "AI Scan", "Patient Records", "Analytics", "Settings"],
-                icons=["house-door-fill","cpu-fill","journal-medical","bar-chart-line-fill","gear-fill"],
-                default_index=0,
-                styles={
-                    "container":         {"padding":"0", "background":"transparent"},
-                    "nav-link":          {
-                        "font-size":"0.84rem",
-                        "font-family":"Sora,sans-serif",
-                        "font-weight":"500",
-                        "padding":"9px 14px",
-                        "border-radius":"10px",
-                        "margin":"2px 0",
-                        "color":"#7fa3c0",
-                        "transition":"all 0.2s",
-                    },
-                    "nav-link-selected": {
-                        "background":"linear-gradient(135deg,#1d4ed8,#2563eb)",
-                        "color":"white",
-                        "font-weight":"600",
-                        "box-shadow":"0 4px 14px rgba(37,99,235,0.40)",
-                    },
-                    "icon": {"font-size":"0.90rem"},
+        st.markdown(f"""
+        <div class="navbar-shell">
+            <div class="nav-logo">
+                <span class="nav-logo-icon">🔬</span>
+                <div>
+                    <div class="nav-logo-text">SkinScan AI</div>
+                    <div class="nav-logo-ver">Clinical Intelligence · v14</div>
+                </div>
+            </div>
+            <div style="flex:1; display:flex; justify-content:center; align-items:center;">
+                <!-- Option menu injected below via streamlit -->
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+                <span class="nav-ai-badge">● {ai_status}</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Horizontal option menu
+        st.markdown('<div class="nav-menu-center" style="max-width:680px; margin:0 auto 18px;">', unsafe_allow_html=True)
+        nav = option_menu(
+            menu_title=None,
+            options=["Home","AI Scan","Dashboard","History","About"],
+            icons=["house-fill","cpu-fill","grid-3x3-gap-fill","clock-history","info-circle-fill"],
+            orientation="horizontal",
+            default_index=0,
+            styles={
+                "container":         {"padding":"0","background":"transparent"},
+                "nav-link":          {
+                    "font-family":"Outfit,sans-serif","font-size":"0.83rem",
+                    "font-weight":"500","padding":"7px 15px",
+                    "border-radius":"9px","margin":"0 1px",
+                    "color":"#6b9ab8","transition":"all 0.2s",
                 },
-            )
-
-            st.divider()
-
-            # Status panel
-            dot  = '<span class="status-online">🟢 Neural Network Online</span>' if self.ai_engine.is_online \
-                   else '<span class="status-offline">🟠 Simulation Active</span>'
-            n    = len(st.session_state.medical_database)
-            high = sum(1 for r in st.session_state.medical_database if r.get("risk_level")=="HIGH")
-
-            st.markdown(f"""
-            <div class="sb-status">
-                <b>AI Engine</b><br>{dot}<br><br>
-                <b>Model File</b><br>
-                <span style='font-family:JetBrains Mono,monospace; font-size:0.74rem; color:#14b8a6;'>
-                    skin_cancer_cnn.h5
-                </span><br><br>
-                <b>Session Scans</b><br>
-                <span style='font-family:JetBrains Mono,monospace; font-size:1.1rem; font-weight:700;
-                             color:#60a5fa;'>{n}</span>
-                &nbsp;·&nbsp;
-                <span style='color:#f87171; font-size:0.78rem;'>{high} high risk</span>
-            </div>
-            """, unsafe_allow_html=True)
-
+                "nav-link-selected": {
+                    "background":"linear-gradient(135deg,#2563eb,#1d4ed8)",
+                    "color":"white","font-weight":"600",
+                    "box-shadow":"0 3px 12px rgba(37,99,235,0.40)",
+                },
+                "icon": {"font-size":"0.84rem"},
+            },
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
         return nav
 
     # ──────────────────────────────────────────────────────────────
     #  LAUNCH
     # ──────────────────────────────────────────────────────────────
     def launch(self):
-        nav = self.build_sidebar()
+        nav = self._navbar()
         {
-            "Dashboard":      self.module_dashboard,
-            "AI Scan":        self.module_ai_scan,
-            "Patient Records":self.module_registry,
-            "Analytics":      self.module_analytics,
-            "Settings":       self.module_settings,
-        }.get(nav, self.module_dashboard)()
+            "Home":      self._home,
+            "AI Scan":   self._scan,
+            "Dashboard": self._dashboard,
+            "History":   self._history,
+            "About":     self._about,
+        }.get(nav, self._home)()
         self._footer()
 
     # ══════════════════════════════════════════════════════════════
-    #  MODULE 1 · Dashboard
+    #  PAGE: HOME
     # ══════════════════════════════════════════════════════════════
-    def module_dashboard(self):
-        # Page banner
+    def _home(self):
+        # Hero
         st.markdown("""
-        <div class="page-banner">
-            <div class="banner-badge">🏠 Main Dashboard</div>
-            <p class="banner-title">Clinical Command Center</p>
-            <p class="banner-sub">Real-time AI dermatology system overview · Session analytics · Quick navigation</p>
+        <div class="hero-section">
+            <div class="hero-badges">
+                <span class="hbadge hbadge-blue">🔬 AI-Powered</span>
+                <span class="hbadge hbadge-teal">🏥 Clinical Grade</span>
+                <span class="hbadge hbadge-purple">🧬 CNN Model</span>
+                <span class="hbadge hbadge-green">✅ FYP Final Build</span>
+            </div>
+            <h1 class="hero-title">AI Dermatology<br>Clinical Platform</h1>
+            <p class="hero-subtitle">
+                Upload a dermoscopic skin image or capture live using your camera.
+                Our CNN model instantly detects <b>Benign</b> or <b>Malignant</b> lesions
+                with clinical-grade confidence scores and full treatment recommendations.
+            </p>
         </div>
         """, unsafe_allow_html=True)
 
-        db     = st.session_state.medical_database
-        n      = len(db)
-        malig  = sum(1 for r in db if r.get("diagnosis")=="Malignant")
-        benign = n - malig
-        conf   = (sum(r.get("confidence",0) for r in db)/n*100) if n else 0
-
-        # KPI row
-        k1, k2, k3, k4 = st.columns(4)
-        kpis = [
-            ("🧬", "Total Scans",      str(n),          "This session",         "#3b82f6"),
-            ("🔴", "Malignant Cases",  str(malig),      "High-risk detected",   "#ef4444"),
-            ("🟢", "Benign Cases",     str(benign),     "Low-risk cleared",     "#10b981"),
-            ("⚡", "Avg Confidence",   f"{conf:.1f}%",  "CNN inference score",  "#8b5cf6"),
+        # Feature cards
+        fc = [
+            ("🧬","CNN Analysis","Upload or capture skin lesion images for instant AI-powered Benign vs Malignant classification."),
+            ("📷","Live Camera","Capture directly from your device webcam or mobile camera. No need to upload files."),
+            ("📊","Clinical Reports","Downloadable PDF + CSV reports with diagnosis, treatment plan, and patient recommendations."),
+            ("📈","Analytics","Real-time epidemiological charts, risk distributions, and session trend analysis."),
+            ("🛡️","Image Quality Check","Automatic validation — resolution, format, and corruption detection before AI analysis."),
+            ("🌓","Dark / Light Mode","Toggle between dark clinical mode and light mode from the Settings panel below."),
         ]
-        for col, (icon, label, value, delta, color) in zip([k1,k2,k3,k4], kpis):
+        r1 = st.columns(3)
+        r2 = st.columns(3)
+        for col, (icon,title,desc) in zip(list(r1)+list(r2), fc):
             with col:
                 st.markdown(f"""
-                <div class="kpi-card">
-                    <div class="kpi-glow" style="background:{color};"></div>
-                    <div class="kpi-icon">{icon}</div>
-                    <div class="kpi-label">{label}</div>
-                    <div class="kpi-value" style="color:{color};">{value}</div>
-                    <div class="kpi-delta-neu">{delta}</div>
+                <div class="feat-card">
+                    <span class="feat-icon">{icon}</span>
+                    <div class="feat-title">{title}</div>
+                    <div class="feat-desc">{desc}</div>
                 </div>
                 """, unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
 
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        col_l, col_r = st.columns([1.4, 1])
-
-        # Recent activity table
-        with col_l:
-            st.markdown("""
-            <div class="glass-card">
-                <div class="sec-head"><span></span>🕒 Recent Scan Activity</div>
-            """, unsafe_allow_html=True)
-            if db:
-                rows = db[-10:][::-1]
-                df_r = pd.DataFrame([{
-                    "Time":      r.get("timestamp","").split(" ")[1] if " " in r.get("timestamp","") else "",
-                    "Patient":   r.get("patient_name","ANON")[:18],
-                    "Result":    r.get("diagnosis","—"),
-                    "Risk":      r.get("risk_level","—"),
-                    "Prob.":     f"{r.get('probability',0)*100:.1f}%",
-                    "Conf.":     f"{r.get('confidence',0)*100:.1f}%",
-                } for r in rows])
-                st.dataframe(df_r, use_container_width=True, hide_index=True, height=260)
-            else:
-                st.info("No scans recorded yet. Head to **AI Scan** to begin.")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        # Donut
-        with col_r:
-            st.markdown("""
-            <div class="glass-card">
-                <div class="sec-head"><span></span>🧬 Diagnosis Distribution</div>
-            """, unsafe_allow_html=True)
-            if db:
-                ser = pd.Series([r.get("diagnosis","?") for r in db]).value_counts()
-                fig = go.Figure(go.Pie(
-                    labels=ser.index.tolist(), values=ser.values.tolist(),
-                    hole=0.56,
-                    marker=dict(colors=["#ef4444","#10b981"],
-                                line=dict(color="rgba(0,0,0,0)", width=2)),
-                    textinfo="percent+label",
-                    textfont_size=11,
-                    hovertemplate="<b>%{label}</b><br>Count: %{value}<br>%{percent}<extra></extra>",
-                ))
-                fig.update_layout(
-                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                    font_color="#7fa3c0", height=260, margin=dict(l=0,r=0,t=5,b=0),
-                    showlegend=True, legend=dict(font_size=11, orientation="h", y=-0.08),
-                    annotations=[dict(text=f"<b>{n}</b><br>scans", x=0.5, y=0.5,
-                                      font_size=14, font_color="#e8f4f8", showarrow=False)],
-                )
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                st.info("Run scans to populate distribution chart.")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        # AI System health cards
         st.markdown("---")
-        st.markdown("""
-        <div class="sec-head"><span></span>⚡ Platform Modules</div>
-        """, unsafe_allow_html=True)
-
-        mc1, mc2, mc3, mc4 = st.columns(4)
-        modules_info = [
-            ("🧬", "AI Scan Lab",       "#2563eb", "Upload dermoscopic image for real-time CNN cancer detection with full clinical report."),
-            ("📋", "Patient Records",   "#14b8a6", "Session database with complete scan history, filters, and CSV/JSON export functionality."),
-            ("📊", "Analytics Engine",  "#8b5cf6", "Interactive epidemiological charts, risk distributions, and scan trend analysis."),
-            ("⚙️", "System Settings",   "#f59e0b", "Configure themes, preferences, and platform behaviour for optimal workflow."),
+        # ABCDE quick guide
+        st.markdown('<div class="sec-head"><span></span>🎗️ ABCDE Melanoma Self-Check</div>',
+                    unsafe_allow_html=True)
+        abcde = [
+            ("A","Asymmetry","#ef4444","One half doesn't match the other."),
+            ("B","Border",   "#f97316","Irregular, ragged, or blurred edges."),
+            ("C","Color",    "#f59e0b","Multiple shades of brown, black, or red."),
+            ("D","Diameter", "#3b82f6","Larger than 6mm — a pencil eraser."),
+            ("E","Evolution","#8b5cf6","Any change in size, shape, or color."),
         ]
-        for col, (icon, title, color, desc) in zip([mc1,mc2,mc3,mc4], modules_info):
+        a1,a2,a3,a4,a5 = st.columns(5)
+        for col,(L,W,C,D) in zip([a1,a2,a3,a4,a5],abcde):
             with col:
                 st.markdown(f"""
-                <div class="glass-card" style="text-align:center; padding:20px 16px;">
-                    <div style="font-size:2rem; margin-bottom:10px;">{icon}</div>
-                    <div style="font-weight:700; font-size:0.90rem; color:{color}; margin-bottom:8px;">{title}</div>
-                    <div style="font-size:0.78rem; color:#7fa3c0; line-height:1.5;">{desc}</div>
+                <div class="abcde-card" style="border-top:3px solid {C};">
+                    <div class="abcde-letter" style="color:{C};">{L}</div>
+                    <div class="abcde-word">{W}</div>
+                    <div class="abcde-desc">{D}</div>
                 </div>
                 """, unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════
-    #  MODULE 2 · AI Scan
+    #  PAGE: AI SCAN
     # ══════════════════════════════════════════════════════════════
-    def module_ai_scan(self):
+    def _scan(self):
         st.markdown("""
         <div class="page-banner">
-            <div class="banner-badge">🧬 AI Analysis Lab</div>
-            <p class="banner-title">Neural Scan Engine</p>
-            <p class="banner-sub">skin_cancer_cnn.h5 · Benign / Malignant · Auto-preprocessing pipeline · Clinical report generation</p>
+            <div class="banner-chip">🧬 Neural Scan Engine</div>
+            <p class="banner-title">AI Analysis Laboratory</p>
+            <p class="banner-sub">skin_cancer_cnn.h5 · Benign / Malignant · Upload image or use live camera · Full clinical report</p>
         </div>
         """, unsafe_allow_html=True)
 
-        col_in, col_out = st.columns([1, 1.35], gap="large")
+        col_in, col_out = st.columns([1, 1.4], gap="large")
 
-        # ── INPUT PANEL ───────────────────────────────────────────
+        # ── INPUT COLUMN ──────────────────────────────────────────
         with col_in:
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-            st.markdown('<div class="sec-head"><span></span>👤 Patient Information</div>', unsafe_allow_html=True)
+            st.markdown('<div class="sec-head"><span></span>👤 Patient Information</div>',
+                        unsafe_allow_html=True)
 
-            p_name = st.text_input("Patient Name / ID", placeholder="e.g. Ahmed Khan  /  PT-2024-001")
+            p_name   = st.text_input("Patient Name / ID", placeholder="e.g. Ahmed Khan  /  PT-2024-001")
             a_col, g_col = st.columns(2)
             with a_col: p_age    = st.number_input("Age", min_value=1, max_value=120, value=35)
             with g_col: p_gender = st.selectbox("Gender", ["Male","Female","Other","Prefer not to say"])
 
-            st.markdown('<div class="sec-head" style="margin-top:16px;"><span></span>🖼️ Dermoscopic Image</div>',
+            # ── Input Mode Toggle ─────────────────────────────────
+            st.markdown('<div class="sec-head" style="margin-top:16px;"><span></span>📸 Image Input Method</div>',
                         unsafe_allow_html=True)
-            st.caption("JPG · JPEG · PNG  ·  Max 10 MB  ·  Min 100×100 px")
 
-            uploaded = st.file_uploader("Drop image here or browse",
-                                        type=["jpg","jpeg","png"],
-                                        label_visibility="collapsed")
-
-            img_ok  = False
-            raw_img = None
-
-            if uploaded:
-                ok, msg = ImageProcessor.validate(uploaded)
-                if not ok:
-                    st.error(msg)
-                else:
-                    st.success(msg)
-                    raw_img  = Image.open(uploaded)
-                    disp_img = ImageProcessor.display_copy(raw_img)
-                    img_ok   = True
-                    st.image(disp_img, use_container_width=True,
-                             caption=f"📐 {raw_img.size[0]}×{raw_img.size[1]} px  ·  {uploaded.size/1024:.1f} KB  ·  {uploaded.name.rsplit('.',1)[-1].upper()}")
-
-            st.markdown('<div class="scan-btn-wrap">', unsafe_allow_html=True)
-            run = st.button("▶ EXECUTE DEEP SCAN", disabled=(not img_ok))
-            st.markdown('</div>', unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)   # glass-card
-
-        # ── OUTPUT PANEL ──────────────────────────────────────────
-        with col_out:
-            # Trigger scan
-            if img_ok and run:
-                with st.spinner(""):
-                    st.markdown("""
-                    <div style="text-align:center; padding:30px 0 10px;">
-                        <div class="scan-ring"></div>
-                        <div style="font-size:0.84rem; color:#7fa3c0; letter-spacing:1px;">
-                            EXTRACTING FEATURE VECTORS…
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    time.sleep(2.5)
-
-                    processed = ImageProcessor.preprocess(raw_img)
-                    result    = self.ai_engine.execute_scan(processed)
-                    intel     = ClinicalProtocols.fetch_data(result["diagnosis"])
-
-                    rec = {
-                        "timestamp":    datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "patient_name": p_name.strip() or "Anonymous",
-                        "age":          p_age,
-                        "gender":       p_gender,
-                        **result,
-                    }
-                    st.session_state.medical_database.append(rec)
-                    st.session_state.last_result      = rec
-                    st.session_state.last_raw_img     = raw_img
-                    st.session_state.last_processed_img = processed
+            mode_col1, mode_col2 = st.columns(2)
+            with mode_col1:
+                if st.button("📁 Upload File",
+                             type="primary" if st.session_state.input_mode=="upload" else "secondary"):
+                    st.session_state.input_mode = "upload"
+                    st.rerun()
+            with mode_col2:
+                if st.button("📷 Live Camera",
+                             type="primary" if st.session_state.input_mode=="camera" else "secondary"):
+                    st.session_state.input_mode = "camera"
                     st.rerun()
 
-            # ── Render last result ────────────────────────────────
-            if st.session_state.last_result:
-                res   = st.session_state.last_result
-                intel = ClinicalProtocols.fetch_data(res["diagnosis"])
+            # ── Image Source ──────────────────────────────────────
+            raw_img = None
+            img_ok  = False
+            qual    = "low"
 
-                # Result banner
-                st.markdown(f"""
-                <div class="result-card {intel['css']}">
-                    <div class="result-tag" style="color:{intel['hex']};">
-                        ◉ AI DIAGNOSIS RESULT
-                    </div>
-                    <div class="result-type" style="color:{intel['hex']};">
-                        {intel['icon']}  {res['diagnosis']}
-                    </div>
-                    <div class="result-desc">{intel['description']}</div>
+            if st.session_state.input_mode == "upload":
+                st.caption("JPG · JPEG · PNG  ·  Max 10 MB  ·  Min 100×100 px")
+                upl = st.file_uploader("Drop image here",
+                                       type=["jpg","jpeg","png"],
+                                       label_visibility="collapsed")
+                if upl:
+                    ok, msg, qual = ImageProcessor.validate(upl)
+                    if not ok:
+                        st.error(msg)
+                    else:
+                        raw_img = Image.open(upl)
+                        img_ok  = True
+                        # Quality indicator
+                        badge_cls = "qual-badge-ok" if qual == "high" else "qual-badge-warn"
+                        st.markdown(f'<div class="{badge_cls}" style="margin-bottom:8px;">'
+                                    f'{"✅" if qual=="high" else "⚠️"} Image Quality: {qual.upper()}'
+                                    f'</div>', unsafe_allow_html=True)
+                        if qual == "medium":
+                            st.warning("⚠️ Image resolution is moderate. Higher resolution dermoscopic images improve AI accuracy.")
+                        disp = ImageProcessor.thumb(raw_img)
+                        st.image(disp, use_container_width=True,
+                                 caption=f"📐 {raw_img.size[0]}×{raw_img.size[1]} px")
+
+            else:  # camera mode
+                st.caption("Allow camera access when prompted by your browser.")
+                cam_img = st.camera_input("📷 Capture skin lesion image",
+                                          label_visibility="visible")
+                if cam_img:
+                    raw_img = Image.open(cam_img)
+                    img_ok  = True
+                    qual    = "high"
+                    st.markdown('<div class="qual-badge-ok">✅ Camera Image Captured</div>',
+                                unsafe_allow_html=True)
+
+            # ── Scan Button ───────────────────────────────────────
+            st.markdown('<div class="scan-btn-wrap" style="margin-top:16px;">', unsafe_allow_html=True)
+            run = st.button("▶ EXECUTE DEEP SCAN", disabled=(not img_ok))
+            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)  # glass-card
+
+        # ── OUTPUT COLUMN ─────────────────────────────────────────
+        with col_out:
+            if img_ok and run:
+                # Progress animation
+                prog_ph = st.empty()
+                ring_ph = st.empty()
+                ring_ph.markdown("""
+                <div class="scan-ring-wrap">
+                    <div class="scan-ring"></div>
+                    <div class="scan-status-txt">AI Analyzing Skin Lesion…</div>
                 </div>
                 """, unsafe_allow_html=True)
 
-                # Metric strip
+                steps = ["Preprocessing image…","Extracting feature maps…",
+                         "Running CNN inference…","Generating clinical report…"]
+                for i, step in enumerate(steps):
+                    prog_ph.progress((i+1)*25, text=f"⚡ {step}")
+                    time.sleep(0.55)
+
+                ring_ph.empty()
+                prog_ph.empty()
+
+                processed = ImageProcessor.preprocess(raw_img)
+                result    = self.ai.execute_scan(processed)
+                intel     = ClinicalProtocols.get(result["diagnosis"])
+
+                rec = {
+                    "timestamp":    datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "patient_name": p_name.strip() or "Anonymous",
+                    "age":          p_age,
+                    "gender":       p_gender,
+                    **result,
+                }
+                st.session_state.db.append(rec)
+                st.session_state.result   = rec
+                st.session_state.raw_img  = raw_img
+                st.session_state.proc_img = processed
+                st.rerun()
+
+            if st.session_state.result:
+                res   = st.session_state.result
+                intel = ClinicalProtocols.get(res["diagnosis"])
+
+                # Result card
+                st.markdown(f"""
+                <div class="result-card {intel['css']}">
+                    <div class="res-tag" style="color:{intel['hex']};">◉ AI DIAGNOSIS RESULT</div>
+                    <div class="res-type" style="color:{intel['hex']};">
+                        {intel['icon']}  {res['diagnosis']}
+                    </div>
+                    <div class="res-desc">{intel['description']}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Metrics
                 m1, m2, m3 = st.columns(3)
                 m1.metric("Cancer Probability", f"{res['probability']*100:.1f}%")
                 m2.metric("AI Confidence",       f"{res['confidence']*100:.1f}%")
-                badge_cls = {"HIGH":"badge-high","MEDIUM":"badge-medium","LOW":"badge-low"}[res["risk_level"]]
+                bc = {"HIGH":"b-high","MEDIUM":"b-medium","LOW":"b-low"}[res["risk_level"]]
                 m3.markdown(f"""
                 <div style="text-align:center; padding-top:6px;">
-                    <div style="font-size:0.70rem; color:#7fa3c0; margin-bottom:7px; text-transform:uppercase; letter-spacing:1.5px;">Risk Level</div>
-                    <span class="badge {badge_cls}">● {res['risk_level']}</span>
+                    <div style="font-size:0.68rem; color:#6b9ab8; margin-bottom:7px;
+                                text-transform:uppercase; letter-spacing:1.8px;">Risk Level</div>
+                    <span class="badge {bc}">● {res['risk_level']}</span>
                 </div>""", unsafe_allow_html=True)
 
-                # Confidence gauge (Plotly)
+                # Confidence gauge
                 fig_g = go.Figure(go.Indicator(
                     mode="gauge+number",
                     value=res["confidence"]*100,
-                    number={"suffix":"%","font":{"family":"JetBrains Mono","size":28,"color":intel["hex"]}},
-                    title={"text":"AI Confidence Score","font":{"family":"Sora","size":12,"color":"#7fa3c0"}},
+                    number={"suffix":"%","font":{"family":"Oxanium","size":28,"color":intel["hex"]}},
+                    title={"text":"AI Confidence","font":{"family":"Outfit","size":11,"color":"#6b9ab8"}},
                     gauge={
-                        "axis":{"range":[0,100],"tickfont":{"size":9,"color":"#7fa3c0"},
-                                "tickcolor":"rgba(100,116,139,0.3)"},
-                        "bar":{"color":intel["hex"], "thickness":0.22},
-                        "bgcolor":"rgba(0,0,0,0)",
-                        "borderwidth":0,
+                        "axis":{"range":[0,100],"tickfont":{"size":9,"color":"#6b9ab8"},
+                                "tickcolor":"rgba(100,116,139,0.25)"},
+                        "bar":{"color":intel["hex"],"thickness":0.22},
+                        "bgcolor":"rgba(0,0,0,0)","borderwidth":0,
                         "steps":[
-                            {"range":[0,40],  "color":"rgba(16,185,129,0.06)"},
-                            {"range":[40,70], "color":"rgba(245,158,11,0.06)"},
-                            {"range":[70,100],"color":"rgba(239,68,68,0.06)"},
+                            {"range":[0,40],  "color":"rgba(16,185,129,0.05)"},
+                            {"range":[40,70], "color":"rgba(245,158,11,0.05)"},
+                            {"range":[70,100],"color":"rgba(239,68,68,0.05)"},
                         ],
                         "threshold":{"line":{"color":intel["hex"],"width":3},
                                      "value":res["confidence"]*100},
                     },
                 ))
                 fig_g.update_layout(
-                    height=200, margin=dict(l=10,r=10,t=42,b=5),
-                    paper_bgcolor="rgba(0,0,0,0)", font_color="#7fa3c0",
+                    height=195, margin=dict(l=10,r=10,t=40,b=5),
+                    paper_bgcolor="rgba(0,0,0,0)", font_color="#6b9ab8",
                 )
                 st.plotly_chart(fig_g, use_container_width=True)
 
                 # Probability fill bar
                 pct = res["probability"]*100
-                fig_p = go.Figure()
-                fig_p.add_trace(go.Bar(
-                    x=[pct], y=[""], orientation="h",
-                    marker=dict(
-                        color=intel["hex"],
-                        line=dict(width=0),
-                    ),
-                    text=[f"  {pct:.1f}%"], textposition="inside",
-                    textfont=dict(color="white", size=13, family="JetBrains Mono"),
-                    width=0.5,
-                    hoverinfo="skip",
-                ))
-                fig_p.add_trace(go.Bar(
-                    x=[100-pct], y=[""], orientation="h",
-                    marker=dict(color="rgba(100,116,139,0.12)", line=dict(width=0)),
-                    width=0.5, hoverinfo="skip",
-                ))
-                fig_p.update_layout(
-                    height=65, margin=dict(l=0,r=0,t=0,b=0),
+                fig_b = go.Figure()
+                fig_b.add_trace(go.Bar(x=[pct],y=[""],orientation="h",
+                    marker=dict(color=intel["hex"],line=dict(width=0)),
+                    text=[f"  {pct:.1f}%"],textposition="inside",
+                    textfont=dict(color="white",size=13,family="Oxanium"),
+                    width=0.5,hoverinfo="skip"))
+                fig_b.add_trace(go.Bar(x=[100-pct],y=[""],orientation="h",
+                    marker=dict(color="rgba(100,116,139,0.10)",line=dict(width=0)),
+                    width=0.5,hoverinfo="skip"))
+                fig_b.update_layout(
+                    height=62, margin=dict(l=0,r=0,t=0,b=0),
                     paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-                    barmode="stack", showlegend=False,
-                    xaxis=dict(range=[0,100], showticklabels=False, showgrid=False, zeroline=False),
-                    yaxis=dict(showticklabels=False, showgrid=False),
+                    barmode="stack",showlegend=False,
+                    xaxis=dict(range=[0,100],showticklabels=False,showgrid=False,zeroline=False),
+                    yaxis=dict(showticklabels=False,showgrid=False),
                 )
-                st.plotly_chart(fig_p, use_container_width=True)
+                st.plotly_chart(fig_b, use_container_width=True)
 
-                # AI message
                 st.info(f"🤖  {intel['ai_message']}")
-                st.caption(f"🔩 Model: **{res['model_mode']}**  ·  📅 Scanned: {res['timestamp']}")
+                st.caption(f"🔩 **{res['model_mode']}**  ·  📅 {res['timestamp']}")
 
             else:
                 st.markdown("""
-                <div class="glass-card" style="text-align:center; padding:4rem 1.5rem; margin-top:0;">
-                    <div style="font-size:4rem; margin-bottom:16px; opacity:0.6;">🔬</div>
-                    <div style="font-weight:700; font-size:1.0rem; margin-bottom:8px;">
+                <div class="glass-card" style="text-align:center; padding:4.5rem 1.5rem;">
+                    <div style="font-size:4rem; margin-bottom:14px; opacity:0.55;">🔬</div>
+                    <div style="font-weight:700; font-size:0.98rem; margin-bottom:8px;">
                         Ready for Analysis
                     </div>
-                    <div style="font-size:0.84rem; color:#7fa3c0; line-height:1.7;">
-                        Upload a dermoscopic image &amp; click<br>
-                        <b>EXECUTE DEEP SCAN</b> to begin AI analysis.
+                    <div style="font-size:0.83rem; color:#6b9ab8; line-height:1.7;">
+                        Upload an image or capture via camera<br>
+                        then click <b>EXECUTE DEEP SCAN</b>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
 
-        # ── Clinical Engine (full width) ──────────────────────────
-        if st.session_state.last_result:
-            res   = st.session_state.last_result
-            intel = ClinicalProtocols.fetch_data(res["diagnosis"])
+        # ── Clinical Engine ───────────────────────────────────────
+        if st.session_state.result:
+            res   = st.session_state.result
+            intel = ClinicalProtocols.get(res["diagnosis"])
 
             st.markdown("---")
-            st.markdown("""
-            <div class="sec-head" style="font-size:1.05rem;">
-                <span></span>📋 Clinical Intelligence Engine
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown('<div class="sec-head" style="font-size:1.04rem;"><span></span>📋 Clinical Intelligence Engine</div>',
+                        unsafe_allow_html=True)
 
-            t1, t2, t3, t4 = st.tabs([
-                "🏥 Recommendations",
-                "🌿 Patient Advice",
-                "💊 Treatment Plan",
-                "📄 Medical Report",
-            ])
+            t1,t2,t3,t4 = st.tabs(["🏥 Recommendations","🌿 Patient Advice","💊 Treatment Plan","📄 Report"])
 
             with t1:
-                r1, r2 = st.columns(2)
+                r1,r2 = st.columns(2)
                 with r1:
                     st.markdown("**Clinical Recommendations**")
-                    for item in intel["recommendations"]:
-                        st.markdown(f'<div class="step-box">{item}</div>', unsafe_allow_html=True)
+                    for i in intel["recommendations"]:
+                        st.markdown(f'<div class="step-box">{i}</div>', unsafe_allow_html=True)
                 with r2:
                     st.markdown("**Consultation & Follow-up**")
                     st.markdown(f'<div class="step-box" style="border-left-color:{intel["hex"]};">'
                                 f'{intel["consultation"]}</div>', unsafe_allow_html=True)
-                    st.markdown(f'<div class="step-box">📅 {intel["followup"]}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="step-box">📅 {intel["followup"]}</div>',
+                                unsafe_allow_html=True)
 
             with t2:
-                for item in intel["patient_advice"]:
-                    st.markdown(f'<div class="step-box">🌿 {item}</div>', unsafe_allow_html=True)
+                for i in intel["patient_advice"]:
+                    st.markdown(f'<div class="step-box">🌿 {i}</div>', unsafe_allow_html=True)
 
             with t3:
-                tc1, tc2 = st.columns(2)
-                plan_items = [
-                    ("🩺 Procedures",             "procedures",      False, "#2563eb"),
-                    ("💊 Medications",            "medications",     False, "#14b8a6"),
-                    ("⚗️ Therapy Options",         "therapy",         False, "#8b5cf6"),
-                    ("🚨 Emergency Warning Signs", "emergency_signs", True,  "#ef4444"),
-                ]
-                for i, (lbl, key, is_emg, color) in enumerate(plan_items):
-                    col = tc1 if i % 2 == 0 else tc2
+                tc1,tc2 = st.columns(2)
+                plan = [("🩺 Procedures","procedures",False,"#2563eb"),
+                        ("💊 Medications","medications",False,"#14b8a6"),
+                        ("⚗️ Therapy","therapy",False,"#8b5cf6"),
+                        ("🚨 Emergency Signs","emergency_signs",True,"#ef4444")]
+                for i,(lbl,key,emg,c) in enumerate(plan):
+                    col = tc1 if i%2==0 else tc2
                     with col:
                         st.markdown(f"""
-                        <div class="glass-card" style="border-left:3px solid {color}; padding:16px; margin-bottom:12px;">
-                            <div style="font-weight:700; color:{color}; margin-bottom:10px; font-size:0.88rem;">{lbl}</div>
-                            {''.join(f'<div class="step-box {"step-emergency" if is_emg else ""}" style="margin-bottom:5px;">{s}</div>' for s in intel[key])}
+                        <div class="glass-card" style="border-left:3px solid {c};padding:15px;margin-bottom:10px;">
+                            <div style="font-weight:700;color:{c};margin-bottom:10px;font-size:0.87rem;">{lbl}</div>
+                            {''.join(f'<div class="step-box {"step-emg" if emg else ""}" style="margin-bottom:5px;">{s}</div>' for s in intel[key])}
                         </div>
                         """, unsafe_allow_html=True)
 
             with t4:
                 st.markdown("#### 📥 Download Clinical Reports")
-                st.caption("Reports generated from your most recent scan.")
-
-                dl1, dl2 = st.columns(2)
-                rec     = st.session_state.last_result
-                proc_img = st.session_state.last_processed_img
-
-                with dl1:
-                    if PDF_OK and proc_img:
-                        pdf_bytes = ReportGenerator.pdf(rec, proc_img)
+                d1,d2 = st.columns(2)
+                rec     = st.session_state.result
+                proc    = st.session_state.proc_img
+                with d1:
+                    if PDF_OK and proc:
+                        pdf_bytes = ReportGenerator.pdf(rec, proc)
                         fname = f"SkinScan_{rec.get('patient_name','PT')}_{datetime.date.today()}.pdf".replace(" ","_")
                         st.download_button("📄 Download PDF Report",
-                                           data=pdf_bytes, file_name=fname, mime="application/pdf")
+                                           data=pdf_bytes,file_name=fname,mime="application/pdf")
                     else:
                         st.warning("Install ReportLab:\n`pip install reportlab`")
-                with dl2:
+                with d2:
                     st.download_button("📊 Download CSV Registry",
-                                       data=ReportGenerator.csv(st.session_state.medical_database),
+                                       data=ReportGenerator.csv_data(st.session_state.db),
                                        file_name=f"SkinScan_Registry_{datetime.date.today()}.csv",
                                        mime="text/csv")
-
                 st.markdown("""
-                <div style='font-size:0.74rem; color:#64748b; margin-top:12px; padding:12px 14px;
-                            border:1px solid rgba(100,116,139,0.18); border-radius:10px; line-height:1.6;'>
-                    ⚠️ <b>AI Disclaimer:</b> These reports are generated by an AI-powered research tool
-                    for educational purposes only. They do <b>not</b> constitute a formal medical diagnosis.
-                    Always consult a qualified dermatologist or oncologist for all clinical decisions.
+                <div style='font-size:0.73rem;color:#6b9ab8;margin-top:12px;padding:12px 14px;
+                            border:1px solid rgba(100,116,139,0.18);border-radius:10px;line-height:1.6;'>
+                    ⚠️ <b>Disclaimer:</b> AI-generated reports for research & educational purposes only.
+                    Not a formal medical diagnosis. Always consult a certified dermatologist.
                 </div>
                 """, unsafe_allow_html=True)
 
     # ══════════════════════════════════════════════════════════════
-    #  MODULE 3 · Patient Records
+    #  PAGE: DASHBOARD
     # ══════════════════════════════════════════════════════════════
-    def module_registry(self):
+    def _dashboard(self):
         st.markdown("""
         <div class="page-banner">
-            <div class="banner-badge">📋 Patient Records</div>
-            <p class="banner-title">Secure Session Database</p>
-            <p class="banner-sub">Complete scan history · Advanced filters · CSV & JSON export</p>
+            <div class="banner-chip">📊 Analytics</div>
+            <p class="banner-title">Clinical Dashboard</p>
+            <p class="banner-sub">Session statistics · Real-time KPIs · Diagnosis patterns · Confidence trends</p>
         </div>
         """, unsafe_allow_html=True)
 
-        db = st.session_state.medical_database
+        db = st.session_state.db
+        n  = len(db)
+        mal = sum(1 for r in db if r.get("diagnosis")=="Malignant")
+        c   = (sum(r.get("confidence",0) for r in db)/n*100) if n else 0
+
+        k1,k2,k3,k4 = st.columns(4)
+        kpis = [
+            ("🧬","Total Scans",    str(n),    "This session",        "#3b82f6"),
+            ("🔴","Malignant",      str(mal),  "High-risk detected",  "#ef4444"),
+            ("🟢","Benign",         str(n-mal),"Low-risk cleared",    "#10b981"),
+            ("⚡","Avg Confidence", f"{c:.1f}%","CNN inference avg",  "#8b5cf6"),
+        ]
+        for col,(icon,lbl,val,dlt,color) in zip([k1,k2,k3,k4],kpis):
+            with col:
+                st.markdown(f"""
+                <div class="kpi-card">
+                    <div class="kpi-glow" style="background:{color};"></div>
+                    <div class="kpi-icon">{icon}</div>
+                    <div class="kpi-label">{lbl}</div>
+                    <div class="kpi-value" style="color:{color};">{val}</div>
+                    <div class="kd-neu">{dlt}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
         if not db:
-            st.info("📭 No records yet. Run scans in **AI Scan** to populate the database.")
-            return
-
-        df = pd.DataFrame([{
-            "Timestamp":   r.get("timestamp",""),
-            "Patient":     r.get("patient_name","ANON"),
-            "Age":         r.get("age","—"),
-            "Gender":      r.get("gender","—"),
-            "Diagnosis":   r.get("diagnosis","—"),
-            "Risk":        r.get("risk_level","—"),
-            "Probability": f"{r.get('probability',0)*100:.1f}%",
-            "Confidence":  f"{r.get('confidence',0)*100:.1f}%",
-            "Engine":      r.get("model_mode","—"),
-        } for r in db])
-
-        # Summary KPIs
-        k1, k2, k3, k4 = st.columns(4)
-        with k1:
-            st.markdown(f"""<div class="kpi-card">
-                <div class="kpi-label">Total Records</div>
-                <div class="kpi-value" style="color:#60a5fa;">{len(db)}</div>
-                <div class="kpi-delta-neu">All sessions</div>
-            </div>""", unsafe_allow_html=True)
-        with k2:
-            m = sum(1 for r in db if r.get("diagnosis")=="Malignant")
-            st.markdown(f"""<div class="kpi-card">
-                <div class="kpi-label">Malignant</div>
-                <div class="kpi-value" style="color:#f87171;">{m}</div>
-                <div class="kpi-delta-neg">High-risk</div>
-            </div>""", unsafe_allow_html=True)
-        with k3:
-            b = sum(1 for r in db if r.get("diagnosis")=="Benign")
-            st.markdown(f"""<div class="kpi-card">
-                <div class="kpi-label">Benign</div>
-                <div class="kpi-value" style="color:#34d399;">{b}</div>
-                <div class="kpi-delta-pos">Low-risk cleared</div>
-            </div>""", unsafe_allow_html=True)
-        with k4:
-            ac = (sum(r.get("confidence",0) for r in db)/len(db)*100)
-            st.markdown(f"""<div class="kpi-card">
-                <div class="kpi-label">Avg Confidence</div>
-                <div class="kpi-value" style="color:#a78bfa;">{ac:.1f}%</div>
-                <div class="kpi-delta-neu">CNN average</div>
-            </div>""", unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        with st.expander("🔍 Filter Records", expanded=False):
-            fc1, fc2, fc3 = st.columns(3)
-            f_diag   = fc1.multiselect("Diagnosis",  ["Malignant","Benign"], default=["Malignant","Benign"])
-            f_risk   = fc2.multiselect("Risk Level", ["HIGH","MEDIUM","LOW"], default=["HIGH","MEDIUM","LOW"])
-            f_gender = fc3.multiselect("Gender", ["Male","Female","Other","Prefer not to say"],
-                                        default=["Male","Female","Other","Prefer not to say"])
-
-        mask = df["Diagnosis"].isin(f_diag) & df["Risk"].isin(f_risk) & df["Gender"].isin(f_gender)
-        df_f = df[mask]
-
-        st.markdown(f'<div style="font-size:0.82rem; color:#7fa3c0; margin-bottom:10px;">'
-                    f'Showing <b style="color:#60a5fa;">{len(df_f)}</b> of <b>{len(df)}</b> records</div>',
-                    unsafe_allow_html=True)
-
-        st.markdown('<div class="glass-card" style="padding:0; overflow:hidden;">', unsafe_allow_html=True)
-        st.dataframe(df_f, use_container_width=True, hide_index=True, height=380)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        e1, e2, e3 = st.columns(3)
-        with e1:
-            st.download_button("📥 Export CSV", data=ReportGenerator.csv(db),
-                               file_name=f"SkinScan_Registry_{datetime.date.today()}.csv",
-                               mime="text/csv")
-        with e2:
-            safe = [{k:str(v) if isinstance(v,datetime.datetime) else v for k,v in r.items()} for r in db]
-            st.download_button("🔗 Export JSON",
-                               data=json.dumps(safe, indent=2),
-                               file_name=f"SkinScan_Registry_{datetime.date.today()}.json",
-                               mime="application/json")
-        with e3:
-            if st.button("🗑️ Clear All Records"):
-                st.session_state.medical_database    = []
-                st.session_state.last_result         = None
-                st.session_state.last_raw_img        = None
-                st.session_state.last_processed_img  = None
-                st.rerun()
-
-    # ══════════════════════════════════════════════════════════════
-    #  MODULE 4 · Analytics
-    # ══════════════════════════════════════════════════════════════
-    def module_analytics(self):
-        st.markdown("""
-        <div class="page-banner">
-            <div class="banner-badge">📊 Analytics</div>
-            <p class="banner-title">Epidemiological Analytics</p>
-            <p class="banner-sub">Real-time diagnosis patterns · Risk trends · Confidence analytics · Session insights</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        db = st.session_state.medical_database
-        if not db:
-            st.warning("⚠️ No scan data available. Run scans to generate analytics.")
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.info("📭 No scan data. Head to **AI Scan** to begin.")
             return
 
         df = pd.DataFrame(db)
-        df["prob_pct"] = df["probability"] * 100
-        df["conf_pct"] = df["confidence"]  * 100
+        df["prob"] = df["probability"]*100
+        df["conf"] = df["confidence"]*100
 
-        PLOT_LAYOUT = dict(
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(family="Sora", color="#7fa3c0"),
-            margin=dict(l=4,r=4,t=44,b=4),
-        )
-        GRID = dict(gridcolor="rgba(37,99,235,0.10)", zerolinecolor="rgba(37,99,235,0.10)")
+        PL = dict(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                  font=dict(family="Outfit",color="#6b9ab8"),
+                  margin=dict(l=4,r=4,t=44,b=4))
+        GR = dict(gridcolor="rgba(37,99,235,0.10)",zerolinecolor="rgba(37,99,235,0.08)")
 
-        r1, r2 = st.columns(2)
+        st.markdown("<br>", unsafe_allow_html=True)
+        r1,r2 = st.columns(2)
 
-        # ── Donut ──
         with r1:
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
             ser = df["diagnosis"].value_counts()
             fig1 = go.Figure(go.Pie(
-                labels=ser.index.tolist(), values=ser.values.tolist(),
-                hole=0.52,
-                marker=dict(colors=["#ef4444","#10b981"],
-                            line=dict(color="rgba(0,0,0,0)",width=3)),
+                labels=ser.index.tolist(), values=ser.values.tolist(), hole=0.54,
+                marker=dict(colors=["#ef4444","#10b981"],line=dict(color="rgba(0,0,0,0)",width=2)),
                 textinfo="percent+label", textfont_size=11,
                 hovertemplate="<b>%{label}</b><br>%{value} cases<br>%{percent}<extra></extra>",
             ))
-            fig1.update_layout(title="Malignant vs Benign Split", height=300,
-                               showlegend=True, legend=dict(font_size=11,orientation="h",y=-0.08),
-                               **PLOT_LAYOUT)
+            fig1.update_layout(title="Diagnosis Distribution", height=300,
+                               showlegend=True, legend=dict(font_size=11,orientation="h",y=-0.1),
+                               annotations=[dict(text=f"<b>{n}</b><br>scans",x=0.5,y=0.5,
+                                                 font_size=14,font_color="#dff0fa",showarrow=False)],
+                               **PL)
             st.plotly_chart(fig1, use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── Risk bar ──
         with r2:
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
             rc = df["risk_level"].value_counts().reset_index()
             rc.columns = ["Risk","Count"]
-            RISK_ORDER = ["HIGH","MEDIUM","LOW"]
-            rc["Risk"] = pd.Categorical(rc["Risk"], categories=RISK_ORDER, ordered=True)
-            rc = rc.sort_values("Risk")
             fig2 = go.Figure()
-            for risk, color in [("HIGH","#ef4444"),("MEDIUM","#f59e0b"),("LOW","#10b981")]:
-                sub = rc[rc["Risk"]==risk]
-                if not sub.empty:
-                    fig2.add_trace(go.Bar(
-                        x=sub["Risk"], y=sub["Count"],
-                        name=risk, marker_color=color,
-                        marker_line_width=0,
-                        hovertemplate=f"<b>{risk}</b><br>%{{y}} cases<extra></extra>",
-                    ))
-            fig2.update_layout(title="Risk Level Distribution", height=300,
-                               showlegend=False, barmode="group",
-                               xaxis=dict(title="", **GRID),
-                               yaxis=dict(title="Cases", **GRID),
-                               **PLOT_LAYOUT)
+            for risk,color in [("HIGH","#ef4444"),("MEDIUM","#f59e0b"),("LOW","#10b981")]:
+                s = rc[rc["Risk"]==risk]
+                if not s.empty:
+                    fig2.add_trace(go.Bar(x=s["Risk"],y=s["Count"],name=risk,
+                        marker_color=color,marker_line_width=0,
+                        hovertemplate=f"<b>{risk}</b><br>%{{y}} cases<extra></extra>"))
+            fig2.update_layout(title="Risk Distribution",height=300,showlegend=False,
+                               barmode="group",
+                               xaxis=dict(title="",**GR),yaxis=dict(title="Cases",**GR),**PL)
             st.plotly_chart(fig2, use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-        r3, r4 = st.columns(2)
-
-        # ── Scatter ──
+        r3,r4 = st.columns(2)
         with r3:
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
             fig3 = go.Figure()
-            for diag, color, sym in [("Malignant","#ef4444","circle"),("Benign","#10b981","diamond")]:
-                sub = df[df["diagnosis"]==diag]
-                if not sub.empty:
+            for diag,color,sym in [("Malignant","#ef4444","circle"),("Benign","#10b981","diamond")]:
+                s = df[df["diagnosis"]==diag]
+                if not s.empty:
                     fig3.add_trace(go.Scatter(
-                        x=sub["prob_pct"], y=sub["conf_pct"],
-                        mode="markers", name=diag,
-                        marker=dict(color=color, size=9, opacity=0.85,
-                                    symbol=sym, line=dict(color=color,width=1)),
-                        hovertemplate="<b>"+diag+"</b><br>Prob: %{x:.1f}%<br>Conf: %{y:.1f}%<extra></extra>",
-                    ))
-            fig3.update_layout(title="Probability vs Confidence",
-                               xaxis=dict(title="Probability (%)", **GRID),
-                               yaxis=dict(title="Confidence (%)", **GRID),
-                               legend=dict(orientation="h",y=-0.18,font_size=11),
-                               height=300, **PLOT_LAYOUT)
+                        x=s["prob"],y=s["conf"],mode="markers",name=diag,
+                        marker=dict(color=color,size=9,opacity=0.85,symbol=sym),
+                        hovertemplate=f"<b>{diag}</b><br>Prob: %{{x:.1f}}%<br>Conf: %{{y:.1f}}%<extra></extra>"))
+            fig3.update_layout(title="Probability vs Confidence",height=285,
+                               xaxis=dict(title="Probability (%)",**GR),
+                               yaxis=dict(title="Confidence (%)",**GR),
+                               legend=dict(orientation="h",y=-0.2,font_size=11),**PL)
             st.plotly_chart(fig3, use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── Trend ──
         with r4:
             st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-            if len(df) >= 2:
-                x = list(range(1, len(df)+1))
+            if len(df)>=2:
+                x = list(range(1,len(df)+1))
                 fig4 = go.Figure()
-                fig4.add_trace(go.Scatter(
-                    x=x, y=df["conf_pct"], mode="lines+markers", name="Confidence",
+                fig4.add_trace(go.Scatter(x=x,y=df["conf"],mode="lines+markers",name="Confidence",
                     line=dict(color="#2563eb",width=2.5,shape="spline"),
-                    marker=dict(size=7, color="#2563eb"),
-                    fill="tozeroy", fillcolor="rgba(37,99,235,0.06)",
-                ))
-                fig4.add_trace(go.Scatter(
-                    x=x, y=df["prob_pct"], mode="lines+markers", name="Probability",
+                    marker=dict(size=7),fill="tozeroy",fillcolor="rgba(37,99,235,0.05)"))
+                fig4.add_trace(go.Scatter(x=x,y=df["prob"],mode="lines+markers",name="Probability",
                     line=dict(color="#ef4444",width=2,dash="dot",shape="spline"),
-                    marker=dict(size=7, color="#ef4444"),
-                ))
-                fig4.update_layout(title="Scan Trend Analysis",
-                                   xaxis=dict(title="Scan #", **GRID),
-                                   yaxis=dict(title="Score (%)", **GRID, range=[0,105]),
-                                   legend=dict(orientation="h",y=-0.18,font_size=11),
-                                   height=300, **PLOT_LAYOUT)
+                    marker=dict(size=7)))
+                fig4.update_layout(title="Scan Trend",height=285,
+                                   xaxis=dict(title="Scan #",**GR),
+                                   yaxis=dict(title="Score (%)",**GR,range=[0,105]),
+                                   legend=dict(orientation="h",y=-0.2,font_size=11),**PL)
                 st.plotly_chart(fig4, use_container_width=True)
             else:
-                st.info("Need 2+ scans for trend chart.")
+                st.info("Need 2+ scans for trend analysis.")
             st.markdown('</div>', unsafe_allow_html=True)
 
-        # Summary stats
-        st.markdown("---")
-        st.markdown('<div class="sec-head"><span></span>📐 Session Summary Statistics</div>',
-                    unsafe_allow_html=True)
-        s1, s2, s3, s4, s5 = st.columns(5)
-        s1.metric("Total Scans",     len(df))
-        s2.metric("Avg Confidence",  f"{df['conf_pct'].mean():.1f}%")
-        s3.metric("Avg Probability", f"{df['prob_pct'].mean():.1f}%")
-        s4.metric("Malignant",       int((df["diagnosis"]=="Malignant").sum()))
-        s5.metric("Benign",          int((df["diagnosis"]=="Benign").sum()))
-
     # ══════════════════════════════════════════════════════════════
-    #  MODULE 5 · Settings
+    #  PAGE: HISTORY
     # ══════════════════════════════════════════════════════════════
-    def module_settings(self):
+    def _history(self):
         st.markdown("""
         <div class="page-banner">
-            <div class="banner-badge">⚙️ Settings</div>
-            <p class="banner-title">Platform Configuration</p>
-            <p class="banner-sub">Theme · AI engine info · ABCDE guide · System preferences</p>
+            <div class="banner-chip">📋 Patient History</div>
+            <p class="banner-title">Scan History Database</p>
+            <p class="banner-sub">Complete session records · Smart filters · Export to CSV / JSON</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        db = st.session_state.db
+        if not db:
+            st.info("📭 No records yet. Run scans in **AI Scan** to populate history.")
+            return
+
+        df = pd.DataFrame([{
+            "Time":      r.get("timestamp","").split(" ")[1] if " " in r.get("timestamp","") else "",
+            "Patient":   r.get("patient_name","ANON"),
+            "Age":       r.get("age","—"),
+            "Gender":    r.get("gender","—"),
+            "Diagnosis": r.get("diagnosis","—"),
+            "Risk":      r.get("risk_level","—"),
+            "Prob.":     f"{r.get('probability',0)*100:.1f}%",
+            "Conf.":     f"{r.get('confidence',0)*100:.1f}%",
+            "Model":     r.get("model_mode","—"),
+        } for r in db])
+
+        k1,k2,k3,k4 = st.columns(4)
+        m = sum(1 for r in db if r.get("diagnosis")=="Malignant")
+        h = sum(1 for r in db if r.get("risk_level")=="HIGH")
+        avg_c = sum(r.get("confidence",0) for r in db)/len(db)*100
+        with k1: st.markdown(f'<div class="kpi-card"><div class="kpi-label">Records</div><div class="kpi-value" style="color:#60a5fa;">{len(db)}</div></div>', unsafe_allow_html=True)
+        with k2: st.markdown(f'<div class="kpi-card"><div class="kpi-label">Malignant</div><div class="kpi-value" style="color:#f87171;">{m}</div></div>', unsafe_allow_html=True)
+        with k3: st.markdown(f'<div class="kpi-card"><div class="kpi-label">High Risk</div><div class="kpi-value" style="color:#fbbf24;">{h}</div></div>', unsafe_allow_html=True)
+        with k4: st.markdown(f'<div class="kpi-card"><div class="kpi-label">Avg Conf.</div><div class="kpi-value" style="color:#a78bfa;">{avg_c:.1f}%</div></div>', unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        with st.expander("🔍 Filter Records"):
+            fc1,fc2,fc3 = st.columns(3)
+            fd = fc1.multiselect("Diagnosis",  ["Malignant","Benign"],  default=["Malignant","Benign"])
+            fr = fc2.multiselect("Risk",       ["HIGH","MEDIUM","LOW"], default=["HIGH","MEDIUM","LOW"])
+            fg = fc3.multiselect("Gender", ["Male","Female","Other","Prefer not to say"],
+                                 default=["Male","Female","Other","Prefer not to say"])
+
+        mask = df["Diagnosis"].isin(fd) & df["Risk"].isin(fr) & df["Gender"].isin(fg)
+        df_f = df[mask]
+        st.caption(f"Showing **{len(df_f)}** of **{len(df)}** records")
+
+        st.markdown('<div class="glass-card" style="padding:0;overflow:hidden;">', unsafe_allow_html=True)
+        st.dataframe(df_f, use_container_width=True, hide_index=True, height=380)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        e1,e2,e3 = st.columns(3)
+        with e1:
+            st.download_button("📥 Export CSV",
+                               data=ReportGenerator.csv_data(db),
+                               file_name=f"SkinScan_{datetime.date.today()}.csv",
+                               mime="text/csv")
+        with e2:
+            safe = [{k:str(v) if isinstance(v,datetime.datetime) else v for k,v in r.items()} for r in db]
+            st.download_button("🔗 Export JSON",
+                               data=json.dumps(safe,indent=2),
+                               file_name=f"SkinScan_{datetime.date.today()}.json",
+                               mime="application/json")
+        with e3:
+            if st.button("🗑️ Clear All Records"):
+                st.session_state.db=[];st.session_state.result=None
+                st.session_state.raw_img=None;st.session_state.proc_img=None
+                st.rerun()
+
+    # ══════════════════════════════════════════════════════════════
+    #  PAGE: ABOUT  (Settings + Guide + Contact)
+    # ══════════════════════════════════════════════════════════════
+    def _about(self):
+        st.markdown("""
+        <div class="page-banner">
+            <div class="banner-chip">ℹ️ About</div>
+            <p class="banner-title">About & Settings</p>
+            <p class="banner-sub">Platform information · Appearance · User guide · Contact</p>
         </div>
         """, unsafe_allow_html=True)
 
         # Theme
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.markdown('<div class="sec-head"><span></span>🎨 Appearance</div>', unsafe_allow_html=True)
-        c1, c2 = st.columns([2,1])
+        c1,c2 = st.columns([3,1])
         with c1:
-            st.markdown("""
-            <div class="settings-label">Color Theme</div>
-            <div class="settings-desc">Switch between dark (recommended) and light clinical mode</div>
-            """, unsafe_allow_html=True)
+            st.markdown('<div class="set-lbl">Color Theme</div><div class="set-desc">Switch between dark clinical mode and light mode</div>', unsafe_allow_html=True)
         with c2:
-            t = st.toggle("Dark Mode", value=(st.session_state.app_theme=="dark"))
-            if t != (st.session_state.app_theme=="dark"):
-                st.session_state.app_theme = "dark" if t else "light"
+            t = st.toggle("Dark Mode", value=(st.session_state.theme=="dark"))
+            if t != (st.session_state.theme=="dark"):
+                st.session_state.theme = "dark" if t else "light"
                 st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
         # AI Engine info
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.markdown('<div class="sec-head"><span></span>🤖 AI Engine Information</div>', unsafe_allow_html=True)
-
-        dot  = "🟢" if self.ai_engine.is_online else "🟠"
-        mode = "Neural Network Online" if self.ai_engine.is_online else "Simulation Mode"
-
-        info_items = [
-            ("Model File",       "skin_cancer_cnn.h5",                        "#14b8a6"),
-            ("Architecture",     "Convolutional Neural Network (CNN)",         "#60a5fa"),
-            ("Output Classes",   "Benign  ·  Malignant",                      "#a78bfa"),
-            ("Input Size",       "224 × 224 pixels (RGB)",                    "#60a5fa"),
-            ("Preprocessing",    "Normalize → Contrast → Sharpen → Resize",   "#7fa3c0"),
-            ("Engine Status",    f"{dot} {mode}",                             "#f59e0b"),
-            ("Platform Version", "SkinScan AI Clinical Intelligence v13.0",   "#7fa3c0"),
+        st.markdown('<div class="sec-head"><span></span>🤖 AI Engine Details</div>', unsafe_allow_html=True)
+        dot  = "🟢" if self.ai.is_online else "🟠"
+        mode = "Neural Network Online" if self.ai.is_online else "Simulation Mode"
+        rows = [
+            ("Model File",       "skin_cancer_cnn.h5",                          "#14b8a6"),
+            ("Architecture",     "Convolutional Neural Network (CNN)",           "#60a5fa"),
+            ("Output Classes",   "Benign  ·  Malignant (Binary sigmoid)",        "#a78bfa"),
+            ("Input Dimensions", "224 × 224 px  ·  RGB  ·  Normalized 0–1",     "#60a5fa"),
+            ("Preprocessing",    "Resize → Normalize → Contrast → Sharpen",      "#7fa3c0"),
+            ("Engine Status",    f"{dot} {mode}",                               "#f59e0b"),
+            ("Version",          "SkinScan AI Clinical Intelligence v14.0",      "#7fa3c0"),
         ]
-        for label, value, color in info_items:
+        for lbl,val,color in rows:
             st.markdown(f"""
-            <div class="settings-row">
-                <div>
-                    <div class="settings-label">{label}</div>
-                </div>
-                <div style="font-family:'JetBrains Mono',monospace; font-size:0.82rem;
-                            color:{color}; text-align:right;">{value}</div>
+            <div class="set-row">
+                <span class="set-lbl">{lbl}</span>
+                <span style="font-family:'Oxanium',monospace;font-size:0.81rem;color:{color};">{val}</span>
             </div>
             """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # User guide accordion
+        # User Guide
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         st.markdown('<div class="sec-head"><span></span>📖 User Guide</div>', unsafe_allow_html=True)
-
         guide = [
-            ("📤 Image Upload Requirements", [
-                "Accepted: <b>JPG, JPEG, PNG</b> only — other formats rejected.",
-                "Maximum file size: <b>10 MB</b>. Minimum resolution: <b>100×100 px</b>.",
-                "Use high-quality clinical dermoscopic images for best accuracy.",
-                "The system auto-preprocesses: resize (224×224) → normalize → enhance.",
-            ]),
-            ("🤖 How AI Inference Works", [
-                "CNN model loaded from <b>skin_cancer_cnn.h5</b> at platform startup.",
-                "🟢 <b>Online Mode</b>: Real TensorFlow inference on your uploaded image.",
-                "🟠 <b>Simulation Mode</b>: Model file not found — demo mode activates safely.",
-                "Sigmoid output ≥ 0.50 = Malignant · < 0.50 = Benign.",
-            ]),
-            ("📊 Understanding Results", [
-                "<b>Probability</b>: How likely the AI's primary diagnosis is correct.",
-                "<b>Confidence</b>: Model certainty — higher is more reliable.",
-                "<b>Risk Level</b>: HIGH (≥80%) · MEDIUM (50–80%) · LOW (<50%).",
-                "Always review Clinical Recommendations and Treatment Plan tabs.",
-            ]),
-            ("👨‍⚕️ When to See a Doctor", [
-                "🚨 <b>Immediately</b> for Malignant / HIGH RISK results.",
-                "📅 <b>Within 1 week</b> for MEDIUM RISK results.",
-                "📆 <b>Annually</b> for Benign / LOW RISK results.",
-                "Any lesion that bleeds, changes, or ulcerates — see a doctor regardless.",
-            ]),
-            ("⚠️ System Limitations", [
-                "This is a <b>research and educational tool</b> — not a certified medical device.",
-                "Always seek a qualified dermatologist for final diagnosis and treatment.",
-                "Session data clears on browser refresh — export CSV to retain records.",
-                "Accuracy improves with clinical dermoscopic images over smartphone photos.",
-            ]),
+            ("📤 Image Upload", ["Accepted: <b>JPG, JPEG, PNG</b> only.",
+                "Max <b>10 MB</b> · Min <b>100×100 px</b>.",
+                "System auto-preprocesses: resize to 224×224 → normalize → enhance.",
+                "A quality warning appears if image resolution is below 300×300 px."]),
+            ("📷 Camera Capture", ["Click <b>Live Camera</b> toggle in AI Scan page.",
+                "Allow camera access when the browser prompts.",
+                "Click the camera button to capture the lesion image.",
+                "Captured image goes through the same preprocessing pipeline."]),
+            ("🤖 AI Inference", ["Model: <b>skin_cancer_cnn.h5</b> loaded at startup.",
+                "🟢 Online Mode: Real TF inference on your image.",
+                "🟠 Simulation: Model not found — demo mode, no crash.",
+                "Sigmoid ≥ 0.50 = Malignant · < 0.50 = Benign."]),
+            ("📊 Results", ["<b>Probability</b>: Likelihood of the primary diagnosis.",
+                "<b>Confidence</b>: Model certainty (higher = more reliable).",
+                "Risk: HIGH ≥80% · MEDIUM 50–80% · LOW <50%.",
+                "Download PDF + CSV reports from the Report tab."]),
+            ("⚠️ Limitations", ["Research tool only — NOT a certified medical device.",
+                "Always consult a qualified dermatologist for clinical decisions.",
+                "Session data clears on browser refresh — export to retain.",
+                "Accuracy improves with clinical dermoscopic images."]),
         ]
-        for title, points in guide:
+        for title,points in guide:
             with st.expander(title):
                 for pt in points:
                     st.markdown(f'<div class="step-box">{pt}</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # ABCDE Guide
+        # Contact
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.markdown('<div class="sec-head"><span></span>🎗️ ABCDE Melanoma Self-Examination Guide</div>',
-                    unsafe_allow_html=True)
-        abcde = [
-            ("A","Asymmetry","#ef4444","One half doesn't match the other half."),
-            ("B","Border",   "#f97316","Irregular, ragged, notched, or blurred edges."),
-            ("C","Color",    "#f59e0b","Multiple shades: brown, black, red, white, or blue."),
-            ("D","Diameter", "#3b82f6","Larger than 6mm (size of a pencil eraser)."),
-            ("E","Evolution","#8b5cf6","Any change in size, shape, color, or new symptoms."),
+        st.markdown('<div class="sec-head"><span></span>📬 Contact</div>', unsafe_allow_html=True)
+        cc1,cc2,cc3 = st.columns(3)
+        contacts = [
+            ("👨‍💻","Developer","Rehan Shafique","FYP · Bioinformatics"),
+            ("🏫","Institution","University","Department of Bioinformatics"),
+            ("🔬","Project","SkinScan AI","Clinical Intelligence Platform v14.0"),
         ]
-        a1,a2,a3,a4,a5 = st.columns(5)
-        for col,(letter,word,color,desc) in zip([a1,a2,a3,a4,a5], abcde):
+        for col,(icon,lbl,name,sub) in zip([cc1,cc2,cc3],contacts):
             with col:
                 st.markdown(f"""
-                <div class="abcde-card" style="border-top:3px solid {color};">
-                    <div class="abcde-letter" style="color:{color};">{letter}</div>
-                    <div class="abcde-word">{word}</div>
-                    <div class="abcde-desc">{desc}</div>
+                <div class="contact-card">
+                    <div style="font-size:2rem;margin-bottom:10px;">{icon}</div>
+                    <div style="font-size:0.68rem;color:#6b9ab8;text-transform:uppercase;
+                                letter-spacing:1.8px;margin-bottom:5px;">{lbl}</div>
+                    <div style="font-weight:700;font-size:0.96rem;margin-bottom:3px;">{name}</div>
+                    <div style="font-size:0.76rem;color:#6b9ab8;">{sub}</div>
                 </div>
                 """, unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     # ──────────────────────────────────────────────────────────────
@@ -1806,21 +1852,21 @@ class SkinScanEnterpriseSuite:
     # ──────────────────────────────────────────────────────────────
     def _footer(self):
         st.markdown("""
-        <div style="text-align:center; padding:2.5rem 0 1rem;
-                    border-top:1px solid rgba(37,99,235,0.12);
-                    margin-top:3rem;">
-            <div style="font-size:1.05rem; font-weight:700; margin-bottom:6px;
+        <div style="text-align:center;padding:2.5rem 0 1rem;
+                    border-top:1px solid rgba(37,99,235,0.12);margin-top:3rem;">
+            <div style="font-family:'Oxanium',sans-serif;font-size:1.1rem;font-weight:800;
                         background:linear-gradient(135deg,#60a5fa,#14b8a6,#a78bfa);
-                        -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+                        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                        margin-bottom:8px;">
                 🔬  SkinScan AI — Clinical Intelligence Platform
             </div>
-            <div style="font-size:0.78rem; color:#475569; line-height:2;">
+            <div style="font-size:0.78rem;color:#475569;line-height:2.0;">
                 Developed by <b style="color:#64748b;">Rehan Shafique</b>
                 &nbsp;·&nbsp; Final Year Project &nbsp;·&nbsp; Bioinformatics<br>
                 Python · Streamlit · TensorFlow · Plotly · ReportLab · PIL
             </div>
-            <div style="font-size:0.72rem; color:#ef4444; margin-top:8px;">
-                ⚠️ For Research &amp; Educational Purposes Only — Not a Certified Medical Device
+            <div style="font-size:0.72rem;color:#ef4444;margin-top:8px;">
+                ⚠️ Research &amp; Educational Use Only — Not a Certified Medical Device
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -1830,5 +1876,5 @@ class SkinScanEnterpriseSuite:
 #  ENTRY POINT
 # ══════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
-    app = SkinScanEnterpriseSuite()
+    app = SkinScanApp()
     app.launch()
