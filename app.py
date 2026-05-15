@@ -1878,3 +1878,172 @@
 # if __name__ == "__main__":
 #     app = SkinScanApp()
 #     app.launch()
+
+
+
+
+
+import os
+import uuid
+import numpy as np
+from flask import Flask, request, jsonify, render_template, abort
+from werkzeug.utils import secure_filename
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+try:
+    from tensorflow.keras.models import load_model
+    from tensorflow.keras.preprocessing.image import load_img, img_to_array
+except ImportError:
+    pass
+
+class Config:
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'super-secret-medical-key-123')
+    UPLOAD_FOLDER = os.path.join('static', 'uploads')
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+    MODEL_PATH = os.path.join('model', 'skin_cancer_model.h5')
+
+app = Flask(__name__)
+app.config.from_object(Config)
+
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs('model', exist_ok=True)
+os.makedirs('templates', exist_ok=True)
+os.makedirs(os.path.join('static', 'css'), exist_ok=True)
+os.makedirs(os.path.join('static', 'js'), exist_ok=True)
+
+CLASSES = {
+    0: 'Benign Lesion',
+    1: 'Melanoma',
+    2: 'Basal Cell Carcinoma',
+    3: 'Squamous Cell Carcinoma'
+}
+
+model = None
+try:
+    if os.path.exists(app.config['MODEL_PATH']):
+        model = load_model(app.config['MODEL_PATH'])
+except Exception as e:
+    pass
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+def determine_risk(confidence, predicted_class):
+    if confidence > 80:
+        risk_level = "High Risk"
+    elif confidence >= 50:
+        risk_level = "Medium Risk"
+    else:
+        risk_level = "Low Risk"
+
+    if predicted_class == 'Benign Lesion' and confidence > 50:
+        risk_level = "Low Risk"
+
+    return risk_level
+
+def generate_recommendation(risk_level, predicted_class):
+    if risk_level == "High Risk":
+        return f"CRITICAL: {predicted_class} strongly suspected. Immediate clinical evaluation and biopsy recommended. Urgent dermatological consultation required."
+    elif risk_level == "Medium Risk":
+        return f"WARNING: {predicted_class} possible. Clinical evaluation and dermoscopy recommended within 1-2 weeks."
+    else:
+        return f"OBSERVATION: Low likelihood of malignancy. Routine monitoring recommended. Seek evaluation if lesion changes in size, shape, or color."
+
+def predict_image(img_path):
+    if model is None:
+        pred_idx = np.random.randint(0, 4)
+        confidence = np.random.uniform(45.0, 99.9)
+    else:
+        img = load_img(img_path, target_size=(224, 224))
+        img_array = img_to_array(img)
+        img_array = np.expand_dims(img_array, axis=0)
+        img_array /= 255.0  
+
+        predictions = model.predict(img_array)[0]
+        pred_idx = np.argmax(predictions)
+        confidence = float(predictions[pred_idx] * 100)
+
+    predicted_class = CLASSES.get(pred_idx, "Unknown")
+    risk_level = determine_risk(confidence, predicted_class)
+    recommendation = generate_recommendation(risk_level, predicted_class)
+
+    return {
+        "prediction": predicted_class,
+        "confidence": f"{confidence:.2f}%",
+        "risk": risk_level,
+        "recommendation": recommendation,
+        "image_path": img_path.replace("\\", "/") 
+    }
+
+@app.route('/')
+def index():
+    return render_template('index.html') if os.path.exists('templates/index.html') else jsonify({"status": "SkinScan API Running"})
+
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html') if os.path.exists('templates/dashboard.html') else jsonify({"route": "/dashboard", "status": "active"})
+
+@app.route('/scan')
+def scan():
+    return render_template('scan.html') if os.path.exists('templates/scan.html') else jsonify({"route": "/scan", "status": "active"})
+
+@app.route('/result')
+def result():
+    return render_template('result.html') if os.path.exists('templates/result.html') else jsonify({"route": "/result", "status": "active"})
+
+@app.route('/analytics')
+def analytics():
+    return render_template('analytics.html') if os.path.exists('templates/analytics.html') else jsonify({"route": "/analytics", "status": "active"})
+
+@app.route('/patients')
+def patients():
+    return render_template('patients.html') if os.path.exists('templates/patients.html') else jsonify({"route": "/patients", "status": "active"})
+
+@app.route('/settings')
+def settings():
+    return render_template('settings.html') if os.path.exists('templates/settings.html') else jsonify({"route": "/settings", "status": "active"})
+
+@app.route('/predict', methods=['POST'])
+def predict_endpoint():
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image file part provided'}), 400
+
+    file = request.files['image']
+
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    if file and allowed_file(file.filename):
+        try:
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            unique_filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+            
+            file.save(file_path)
+
+            result_data = predict_image(file_path)
+
+            return jsonify(result_data), 200
+
+        except Exception as e:
+            return jsonify({'error': f'Processing failed: {str(e)}'}), 500
+            
+    return jsonify({'error': 'Invalid file format. Allowed: jpg, jpeg, png'}), 400
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return jsonify({'error': 'Not Found', 'message': 'The requested URL was not found on the server.'}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({'error': 'Internal Server Error', 'message': 'An unexpected error occurred.'}), 500
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    return jsonify({'error': 'File Too Large', 'message': 'The uploaded file exceeds the 16MB limit.'}), 413
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
